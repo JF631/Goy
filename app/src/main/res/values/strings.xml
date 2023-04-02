@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Goy</string>
+    <string-array name="weekday_array">
+        <item>Sunday</item>
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+    </string-array>
+
+    <string-array name="departments">
+        <item>Turnen</item>
+        <item>Leichtathletik</item>
+    </string-array>
+</resources>
