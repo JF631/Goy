@@ -113,9 +113,29 @@ public class CreateFragment extends DialogFragment {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
+                if(selected_days.size() <= 0){
+                    Toast.makeText(getActivity(), "Select at least one day", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 start = LocalTime.parse(etTimeStart.getText());
                 end = LocalTime.parse(etTimeEnd.getText());
-                onCreateCourseClickedListener.onCreateCourseClicked(selected_days, departmentSpinner.getSelectedItem().toString(), etGroup.getText().toString(), start, end);
+                if(start.equals(end) || end.isBefore(start)){
+                    Toast.makeText(getActivity(), "Cannot process the provided times", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(end.toString().isEmpty() || end.toString().isEmpty()){
+                    Toast.makeText(getActivity(), "enter times", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String group = etGroup.getText().toString();
+                if(group.isEmpty()){
+                    Toast.makeText(getActivity(), "Provide a group name", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                onCreateCourseClickedListener.onCreateCourseClicked(selected_days,
+                        departmentSpinner.getSelectedItem().toString(),
+                        group,
+                        start, end);
                 dismiss();
             }
         });
