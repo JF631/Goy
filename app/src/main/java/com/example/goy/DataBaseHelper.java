@@ -133,9 +133,35 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public Pair<LocalTime, LocalTime> getTimes(DayOfWeek weekday){
+    public List<Pair<LocalTime, LocalTime>> getTimesForWeekday(DayOfWeek weekday){
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Pair<LocalTime, LocalTime>> rtrn = new ArrayList<>();
+        String[] projection = {"start_time, end_time"};
+        String selection = "weekdays = ?";
+        String[] args = {weekday.name()};
+
+        Cursor cursor = db.query("schedules", projection, selection, args, null, null, null);
+
+        if(cursor.getCount() == 0){
+            return null;
+        }
+
+        while (cursor.moveToNext()){
+            String startString = cursor.getString(cursor.getColumnIndexOrThrow("start_time"));
+            String endString = cursor.getString(cursor.getColumnIndexOrThrow("end_time"));
+            rtrn.add(new Pair<LocalTime, LocalTime>(LocalTime.parse(startString), LocalTime.parse(endString)));
+        }
+        cursor.close();
+        db.close();
+
+        return rtrn;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public Pair<LocalTime, LocalTime> getMinMAxTimes(DayOfWeek weekday) {
+
         String start = null, end = null;
-        String sqlQuery = "SELECT MIN(CAST(start_time AS TIME)) FROM schedules WHERE weekdays = " + weekday + ";";
+        String sqlQuery = "SELECT COALESCE(MIN(strftime('%H:%M', start_time)), NULL) FROM schedules WHERE weekdays = '" + weekday.toString() + "';";
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(sqlQuery, null);
@@ -143,21 +169,26 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             start = cursor.getString(0);
         }
 
-        sqlQuery = "SELECT MAX(CAST(end_time AS TIME)) FROM schedules WHERE weekdays = " + weekday + "; " ;
+        sqlQuery = "SELECT COALESCE(MAX(strftime('%H:%M', end_time)), NULL) FROM schedules WHERE weekdays = '" + weekday.toString() + "';";
 
         cursor = db.rawQuery(sqlQuery, null);
         if (cursor.moveToFirst()) {
             end = cursor.getString(0);
         }
 
+        if(start == null || end == null){
+            return null;
+        }
+
         Pair<LocalTime, LocalTime> rtrn = new Pair<>(LocalTime.parse(start), LocalTime.parse(end));
+
 
         cursor.close();
         db.close();
 
         return rtrn;
-
     }
+
 
     private boolean dateExists(Course course, String date){
         SQLiteDatabase db = this.getReadableDatabase();
@@ -219,9 +250,31 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         contentValues.put("start_time", course.getStartTime());
         contentValues.put("end_time", course.getEndTime());
         contentValues.put("duration", course.getDuration());
-        contentValues.put("weekdays", course.getDays());
+        contentValues.put("weekdays", course.getDays().toUpperCase());
         long rtrn = db.insert("schedules", null, contentValues);
         return rtrn;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public Course getCourse(DayOfWeek weekday, Pair<LocalTime, LocalTime> timePair){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Course course = null;
+        String[] projection = {"id", "department_name", "group_name", "duration"};
+        String selection = "weekdays = ? AND start_time = ? AND end_time = ?";
+        String[] args = {weekday.toString(), timePair.getFirst().toString(), timePair.getSecond().toString()};
+
+        Cursor cursor = db.query("schedules", projection, selection, args, null, null, null);
+        if(cursor.moveToFirst()){
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            String department = cursor.getString(cursor.getColumnIndexOrThrow("department_name"));
+            String group = cursor.getString(cursor.getColumnIndexOrThrow("group_name"));
+            course = new Course(department, group, new TimeRange(timePair.getFirst().toString(), timePair.getSecond().toString(), weekday.toString()));
+            course.setId(id);
+        }
+        cursor.close();
+        db.close();
+
+        return course;
     }
 
     public boolean deleteCourse(Course course){

@@ -17,6 +17,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
     public CourseAdapter(List<Course> courseList){
         this.courseList = courseList;
     }
+    public CourseAdapter(){}
 
     public interface OnItemClickListener{
         void onItemClick(int position);

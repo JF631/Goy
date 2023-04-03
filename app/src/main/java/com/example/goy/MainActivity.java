@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         dbHelper = new DataBaseHelper(this);
 
         GeofenceHelper geofenceHelper = new GeofenceHelper(this);
-        geofenceHelper.addGeofence(32.2,47.3, "testFnece");
+        geofenceHelper.addGeofence(51.260586, 7.470490, "sporthalle");
 
         courseList = dbHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
@@ -77,14 +77,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         courseAdapter.setOnItemClickListener(new CourseAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                LocalDate currentDate = LocalDate.now();
-                String dateString = currentDate.format(dateFormat);
-                if(dbHelper.insertDate(courseList.get(position), dateString)){
-                    Toast.makeText(MainActivity.this, "date inserted", Toast.LENGTH_SHORT).show();
-                }else {
-                    Toast.makeText(MainActivity.this, "Date is already present in table: " + dbHelper.getDates(courseList.get(position)).toString(), Toast.LENGTH_SHORT).show();
-                }
-
+                Toast.makeText(MainActivity.this, "Dates: " + dbHelper.getDates(courseList.get(position)).toString(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -103,9 +96,6 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                GeofenceBroadcastReceiver receiver = new GeofenceBroadcastReceiver();
-                Intent intent = new Intent(MainActivity.this, GeofenceBroadcastReceiver.class);
-                receiver.onReceive(MainActivity.this, intent);
                 showFragment();
             }
         });
@@ -113,7 +103,10 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         add.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                return false;
+                GeofenceBroadcastReceiver receiver = new GeofenceBroadcastReceiver();
+                Intent intent = new Intent(MainActivity.this, GeofenceBroadcastReceiver.class);
+                receiver.onReceive(MainActivity.this, intent);
+                return true;
             }
         });
     }
