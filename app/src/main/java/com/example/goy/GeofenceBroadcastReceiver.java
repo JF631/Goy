@@ -12,6 +12,9 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "GeofenceBroadcastReceiver";
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d(TAG, "received");
+        Intent serviceIntent = new Intent(context, IntentDatabaseService.class);
+        context.startService(serviceIntent);
 
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()){
@@ -21,7 +24,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         int transitionType = geofencingEvent.getGeofenceTransition();
         if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER){
             Log.d(TAG, "geofence entered");
-            Intent serviceIntent = new Intent(context, IntentDatabaseService.class);
+            serviceIntent = new Intent(context, IntentDatabaseService.class);
             context.startService(serviceIntent);
         }
 

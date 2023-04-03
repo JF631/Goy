@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -21,6 +22,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.DayOfWeek;
@@ -65,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
 
+        GeofenceHelper geofenceHelper = new GeofenceHelper(this);
+        geofenceHelper.addGeofence(32.2,47.3, "testFnece");
+
         courseList = dbHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
         hour_view.setLayoutManager(new LinearLayoutManager(this));
@@ -98,10 +103,21 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                GeofenceBroadcastReceiver receiver = new GeofenceBroadcastReceiver();
+                Intent intent = new Intent(MainActivity.this, GeofenceBroadcastReceiver.class);
+                receiver.onReceive(MainActivity.this, intent);
                 showFragment();
             }
         });
+
+        add.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                return false;
+            }
+        });
     }
+
 
     private void showFragment(){
         CreateFragment createFragment = new CreateFragment();

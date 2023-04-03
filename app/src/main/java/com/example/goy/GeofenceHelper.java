@@ -38,6 +38,7 @@ public class GeofenceHelper {
                 .setCircularRegion(latitude, longitude, GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
+                .setLoiteringDelay(30000)
                 .build();
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
@@ -64,6 +65,6 @@ public class GeofenceHelper {
 
     private PendingIntent createGeofencingPendingIntent(){
         Intent intent = new Intent(ctx, GeofenceBroadcastReceiver.class);
-        return PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }
