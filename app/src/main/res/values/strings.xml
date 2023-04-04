@@ -10,7 +10,8 @@
         <item>Saturday</item>
     </string-array>
 
-    <string name="default_notification_channel_id">default_channel</string>
+    <string name="location_notification_channel_id">loc_channel</string>
+    <string name="location_notification_channel_name">location channel</string>
 
     <string-array name="departments">
         <item>Turnen</item>

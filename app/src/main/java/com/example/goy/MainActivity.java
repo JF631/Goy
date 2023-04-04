@@ -45,9 +45,9 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     private CourseAdapter courseAdapter;
     private List<Course> courseList;
     private GeofenceHelper geofenceHelper;
-    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private static final int PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2;
-    private static final String[] fineLocationPermission = {Manifest.permission.ACCESS_FINE_LOCATION};
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1, PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2,
+            PERMISSIONS_REQUEST_NOTIFICATIONS = 3;
+    private static String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION} ;
     private static final String[] backgroundLocationPermission = {Manifest.permission.ACCESS_BACKGROUND_LOCATION};
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -56,12 +56,16 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
+
         main_bar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(main_bar);
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                        PackageManager.PERMISSION_GRANTED)){
             ActivityCompat.requestPermissions(this,
-                    fineLocationPermission,
+                    requiredPermissions,
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
@@ -144,6 +148,14 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 Toast.makeText(this, "thanks for allowing location access", Toast.LENGTH_SHORT).show();
                 registerGeofence();
+            }else {
+                Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        if(requestCode == PERMISSIONS_REQUEST_NOTIFICATIONS){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "thanks for allowing notifications", Toast.LENGTH_SHORT).show();
             }else {
                 Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
             }

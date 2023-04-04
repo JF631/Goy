@@ -36,7 +36,7 @@ public class CreateFragment extends DialogFragment {
     private Spinner departmentSpinner;
     private EditText etGroup, etTimeStart, etTimeEnd;
     private LocalTime start, end;
-    private List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
+    private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
     private List<String> selected_days = new ArrayList<>();
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;

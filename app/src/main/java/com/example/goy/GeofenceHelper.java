@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeofenceHelper {
-    private static final float GEOFENCE_RADIUS = 150;
+    private static final float GEOFENCE_RADIUS = 400;
     private static final String TAG = "GeofenceHelper";
 
 
@@ -42,7 +42,7 @@ public class GeofenceHelper {
                 .build();
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL)
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .addGeofence(geofence)
                 .build();
 
@@ -50,7 +50,7 @@ public class GeofenceHelper {
             return;
         }
         geofencingClient.addGeofences(geofencingRequest, pendingIntent)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added"))
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofence.toString()))
                 .addOnFailureListener(e -> Log.d(TAG, "failed to add geofence", e));
     }
 
