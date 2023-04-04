@@ -16,13 +16,14 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.d(TAG, "geofence received");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()){
             Log.e(TAG, "Geofencing error");
             return;
         }
         int transitionType = geofencingEvent.getGeofenceTransition();
-        if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER){
+        if (transitionType == Geofence.GEOFENCE_TRANSITION_DWELL){
             Log.d(TAG, "geofence entered");
             Intent serviceIntent = new Intent(context, IntentDatabaseService.class);
             context.startService(serviceIntent);

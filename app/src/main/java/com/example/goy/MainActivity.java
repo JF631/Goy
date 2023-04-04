@@ -43,10 +43,12 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     private Toolbar main_bar;
     private DataBaseHelper dbHelper;
     private CourseAdapter courseAdapter;
-    private SQLiteDatabase db;
     private List<Course> courseList;
+    private GeofenceHelper geofenceHelper;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final int PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2;
+    private static final String[] fineLocationPermission = {Manifest.permission.ACCESS_FINE_LOCATION};
+    private static final String[] backgroundLocationPermission = {Manifest.permission.ACCESS_BACKGROUND_LOCATION};
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    fineLocationPermission,
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
@@ -67,8 +69,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
 
-        GeofenceHelper geofenceHelper = new GeofenceHelper(this);
-        geofenceHelper.addGeofence(51.260586, 7.470490, "sporthalle");
+        geofenceHelper = new GeofenceHelper(this);
 
         courseList = dbHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
@@ -111,6 +112,9 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         });
     }
 
+    private void registerGeofence(){
+        geofenceHelper.addGeofence(51.260586, 7.470490, "sporthalle");
+    }
 
     private void showFragment(){
         CreateFragment createFragment = new CreateFragment();
@@ -120,17 +124,30 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION){
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) registerGeofence();
                 //granted
-            }
-            else {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(this, backgroundLocationPermission, PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION);
+                }
+            } else {
                 //denied
                 Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
             }
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "thanks for allowing location access", Toast.LENGTH_SHORT).show();
+                registerGeofence();
+            }else {
+                Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
 
