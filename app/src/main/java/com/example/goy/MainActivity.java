@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
 
-        geofenceHelper = new GeofenceHelper(this);
+        geofenceHelper = new GeofenceHelper(MainActivity.this);
 
         courseList = dbHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);

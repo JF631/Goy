@@ -11,18 +11,23 @@ import androidx.annotation.RequiresApi;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
+import java.util.List;
+
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "GeofenceBroadcastReceiver";
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "geofence received");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()){
-            Log.e(TAG, "Geofencing error");
+            int errorCode = geofencingEvent.getErrorCode();
+            Log.e(TAG, "Geofencing error: " + errorCode);
             return;
         }
         int transitionType = geofencingEvent.getGeofenceTransition();
+        Log.d(TAG,  "GEOINFO: " + geofencingEvent.toString());
+        Log.d(TAG, String.valueOf(transitionType));
+        //Log.d(TAG, geofencingEvent.getTriggeringGeofences().get(0).toString());
         if (transitionType == Geofence.GEOFENCE_TRANSITION_DWELL){
             Log.d(TAG, "geofence entered");
             Intent serviceIntent = new Intent(context, IntentDatabaseService.class);

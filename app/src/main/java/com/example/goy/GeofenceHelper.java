@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeofenceHelper {
-    private static final float GEOFENCE_RADIUS = 300;
+    private static final float GEOFENCE_RADIUS = 150;
     private static final String TAG = "GeofenceHelper";
 
 
@@ -28,7 +28,7 @@ public class GeofenceHelper {
 
     public GeofenceHelper(Context ctx) {
         this.ctx = ctx;
-        geofencingClient = LocationServices.getGeofencingClient(this.ctx);
+        geofencingClient = LocationServices.getGeofencingClient(ctx);
         pendingIntent = createGeofencingPendingIntent();
     }
 
@@ -37,12 +37,12 @@ public class GeofenceHelper {
                 .setRequestId(geofenceId)
                 .setCircularRegion(latitude, longitude, GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL)
-                .setLoiteringDelay(1000)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
+                .setLoiteringDelay(0)
                 .build();
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL)
                 .addGeofence(geofence)
                 .build();
 
@@ -65,7 +65,6 @@ public class GeofenceHelper {
 
     private PendingIntent createGeofencingPendingIntent(){
         Intent intent = new Intent(ctx, GeofenceBroadcastReceiver.class);
-        intent.setAction("com.google.android.gms.location.ACTION_GEOFENCE_TRANSITION");
         return PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }
