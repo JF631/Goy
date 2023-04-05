@@ -137,8 +137,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         List<Pair<LocalTime, LocalTime>> rtrn = new ArrayList<>();
         String[] projection = {"start_time, end_time"};
-        String selection = "weekdays = ?";
-        String[] args = {weekday.name()};
+        String selection = "weekdays LIKE ?";
+        String[] args = {"%" + weekday.name() + "%"};
 
         Cursor cursor = db.query("schedules", projection, selection, args, null, null, null);
 
@@ -260,8 +260,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Course course = null;
         String[] projection = {"id", "department_name", "group_name", "duration"};
-        String selection = "weekdays = ? AND start_time = ? AND end_time = ?";
-        String[] args = {weekday.toString(), timePair.getFirst().toString(), timePair.getSecond().toString()};
+        String selection = "weekdays LIKE ? AND start_time = ? AND end_time = ?";
+        String[] args = {"%" + weekday.name() + "%", timePair.getFirst().toString(), timePair.getSecond().toString()};
 
         Cursor cursor = db.query("schedules", projection, selection, args, null, null, null);
         if(cursor.moveToFirst()){

@@ -45,28 +45,9 @@ public class IntentDatabaseService extends IntentService {
             if(currentTime.isAfter(time.getFirst()) && currentTime.isBefore(time.getSecond())){
                 Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);
                 dataBaseHelper.insertDate(course, date.format(dateFormat));
-                Toast.makeText(this, time.toString(), Toast.LENGTH_SHORT).show();
             }else {
-                Toast.makeText(this, "not the right time " + time.toString(), Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "was here when no course took place");
             }
         }
-
-        NotificationChannel channel = new NotificationChannel(
-                "channel_id",
-                "Geofence Alert",
-                NotificationManager.IMPORTANCE_DEFAULT
-        );
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        notificationManager.createNotificationChannel(channel);
-
-        String msg = "entered geofence";
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "channel_id")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("Geofence Alert")
-                .setContentText(msg)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
-        notificationManagerCompat.notify(0, notificationBuilder.build());
     }
 }

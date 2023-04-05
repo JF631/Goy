@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -23,6 +24,9 @@ import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.DayOfWeek;
@@ -73,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
 
-        geofenceHelper = new GeofenceHelper(MainActivity.this);
+        geofenceHelper = new GeofenceHelper(this);
 
         courseList = dbHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
@@ -117,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     }
 
     private void registerGeofence(){
-        geofenceHelper.addGeofence(51.260586, 7.470490, "testHalle");
+        geofenceHelper.addGeofence((double) 51.259864, (double) 7.477231, "Sportplatz");
     }
 
     private void showFragment(){

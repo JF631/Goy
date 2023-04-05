@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 
@@ -29,15 +30,15 @@ public class GeofenceHelper {
 
     public GeofenceHelper(Context ctx) {
         this.ctx = ctx;
-        geofencingClient = LocationServices.getGeofencingClient(ctx);
-        pendingIntent = createGeofencingPendingIntent();
+        this.geofencingClient = LocationServices.getGeofencingClient(ctx);
+        this.pendingIntent = createGeofencingPendingIntent();
     }
 
     @SuppressLint("MissingPermission")
     public void addGeofence(double latitude, double longitude, String geofenceId) {
         Geofence geofence = new Geofence.Builder()
                 .setRequestId(geofenceId)
-                .setCircularRegion(latitude, longitude, GEOFENCE_RADIUS)
+                .setCircularRegion(latitude, longitude, 100)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
                 .setLoiteringDelay(0)
@@ -61,9 +62,17 @@ public class GeofenceHelper {
                 .addOnFailureListener(e -> Log.d(TAG, "failed to remove geofence", e));
     }
 
+    public boolean checkExistance(String fenceId, Intent intent){
+        List<Geofence> triggeringFences = GeofencingEvent.fromIntent(intent).getTriggeringGeofences();
+        for(Geofence fence : triggeringFences){
+            if(fence.getRequestId().equals(fenceId)) return true;
+        }
+        return false;
+    }
+
 
     private PendingIntent createGeofencingPendingIntent(){
         Intent intent = new Intent(ctx, GeofenceBroadcastReceiver.class);
-        return PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getBroadcast(ctx, 0, intent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT );
     }
 }
