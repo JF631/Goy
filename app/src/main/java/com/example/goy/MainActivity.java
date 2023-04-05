@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     }
 
     private void registerGeofence(){
-        geofenceHelper.addGeofence(51.260586, 7.470490, "sporthalle");
+        geofenceHelper.addGeofence(51.260586, 7.470490, "testHalle");
     }
 
     private void showFragment(){

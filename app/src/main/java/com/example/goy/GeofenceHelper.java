@@ -1,6 +1,7 @@
 package com.example.goy;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeofenceHelper {
-    private static final float GEOFENCE_RADIUS = 400;
+    private static final float GEOFENCE_RADIUS = 100;
     private static final String TAG = "GeofenceHelper";
 
 
@@ -32,6 +33,7 @@ public class GeofenceHelper {
         pendingIntent = createGeofencingPendingIntent();
     }
 
+    @SuppressLint("MissingPermission")
     public void addGeofence(double latitude, double longitude, String geofenceId) {
         Geofence geofence = new Geofence.Builder()
                 .setRequestId(geofenceId)
@@ -46,9 +48,6 @@ public class GeofenceHelper {
                 .addGeofence(geofence)
                 .build();
 
-        if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
         geofencingClient.addGeofences(geofencingRequest, pendingIntent)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofence.toString()))
                 .addOnFailureListener(e -> Log.d(TAG, "failed to add geofence", e));
