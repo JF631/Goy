@@ -31,7 +31,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             return;
         }
         if(geofencingEvent.getTriggeringLocation() != null){
-            Log.d(TAG,  "GEOINFO: " + geofencingEvent.getTriggeringLocation().toString());
+            Log.d(TAG,  "GEOINFO: " + geofencingEvent.getTriggeringLocation());
         }
         int transitionType = geofencingEvent.getGeofenceTransition();
         Log.d(TAG, String.valueOf(transitionType));

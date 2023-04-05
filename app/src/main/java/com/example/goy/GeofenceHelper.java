@@ -35,22 +35,33 @@ public class GeofenceHelper {
     }
 
     @SuppressLint("MissingPermission")
-    public void addGeofence(double latitude, double longitude, String geofenceId) {
+    public void addGeofence(List<Location> locations) {
+        List<Geofence> geofenceList = new ArrayList<>();
+        for(Location location : locations){
+            geofenceList.add(new Geofence.Builder()
+                    .setRequestId(location.getName())
+                    .setCircularRegion(location.getLatitude(), location.getLongitude(), location.getRadius())
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT |Geofence.GEOFENCE_TRANSITION_DWELL)
+                    .setLoiteringDelay(100000)
+                    .build());
+        }
+        /**
         Geofence geofence = new Geofence.Builder()
                 .setRequestId(geofenceId)
-                .setCircularRegion(latitude, longitude, 100)
+                .setCircularRegion(latitude, longitude, GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
-                .setLoiteringDelay(0)
-                .build();
+                .setLoiteringDelay(10000)
+                .build();**/
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                .addGeofence(geofence)
+                .addGeofences(geofenceList)
                 .build();
 
         geofencingClient.addGeofences(geofencingRequest, pendingIntent)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofence.toString()))
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofenceList.toString()))
                 .addOnFailureListener(e -> Log.d(TAG, "failed to add geofence", e));
     }
 
