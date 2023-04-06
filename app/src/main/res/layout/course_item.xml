@@ -39,8 +39,9 @@
             android:layout_height="wrap_content"
             android:textStyle="normal"
             android:textSize="12sp"
-            android:gravity="center"
-            android:layout_below="@+id/course_days"/>
+            android:gravity="start"
+            android:layout_below="@+id/course_days"
+            android:text="test"/>
 
     </RelativeLayout>
 
