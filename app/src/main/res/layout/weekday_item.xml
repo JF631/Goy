@@ -9,4 +9,21 @@
         android:layout_height="wrap_content"
         android:checkMark="?android:attr/listChoiceIndicatorMultiple"/>
 
+    <TextView
+        android:id="@+id/create_start_item"
+        android:layout_width="70dp"
+        android:padding="10dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/create_weekday_item"
+        android:text="start"/>
+
+    <TextView
+        android:id="@+id/create_end_item"
+        android:layout_width="70dp"
+        android:padding="10dp"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/create_start_item"
+        android:layout_below="@+id/create_weekday_item"
+        android:text="end"/>
+
 </RelativeLayout>

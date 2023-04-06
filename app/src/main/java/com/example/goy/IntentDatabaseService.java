@@ -38,13 +38,19 @@ public class IntentDatabaseService extends IntentService {
 
         timeList = dataBaseHelper.getTimesForWeekday(date.getDayOfWeek());
         if(timeList == null){
-            Log.d(TAG, "no times found for given weekday");
+            Log.d(TAG, "no times found for: " + date.getDayOfWeek().name());
             return;
         }
+        assert intent != null;
+        String location = intent.getStringExtra("location");
         for(Pair<LocalTime, LocalTime> time : timeList){
             if(currentTime.isAfter(time.getFirst()) && currentTime.isBefore(time.getSecond())){
                 Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);
-                dataBaseHelper.insertDate(course, date.format(dateFormat));
+                if(dataBaseHelper.getLocations(course).contains(location)){
+                 dataBaseHelper.insertDate(course, date.format(dateFormat));
+                }else {
+                    Log.d(TAG, "wrong location for course: " + location);
+                }
             }else {
                 Log.d(TAG, "was here when no course took place");
             }

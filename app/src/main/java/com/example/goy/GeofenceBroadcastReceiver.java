@@ -15,14 +15,11 @@ import java.util.List;
 
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "GeofenceBroadcastReceiver";
-    private static final String MSGTITLE = "Geofence Crossed";
-    private static final String MSG = "You have crossed a geofence";
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, intent.toString());
         NotificationHelper notificationHelper = new NotificationHelper(context);
-        //if(!notificationHelper.createNotification(MSGTITLE, MSG)){Log.d(TAG, "no notification permission given");}
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
         if (geofencingEvent.hasError()){
@@ -35,10 +32,13 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         }
         int transitionType = geofencingEvent.getGeofenceTransition();
         Log.d(TAG, String.valueOf(transitionType));
-        if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER){
-            Log.d(TAG, "geofence entered");
+        if (transitionType == Geofence.GEOFENCE_TRANSITION_DWELL){
+            List<Geofence> triggeredFences = geofencingEvent.getTriggeringGeofences();
+            if (triggeredFences.size() > 1) return;
+            Log.d(TAG, "geofence entered: " + geofencingEvent.getTriggeringGeofences().toString());
             if(!notificationHelper.createNotification("Geofence entered", "finally!")){Log.d(TAG, "no notification permission given");}
             Intent serviceIntent = new Intent(context, IntentDatabaseService.class);
+            serviceIntent.putExtra("location", triggeredFences.get(0).getRequestId());
             context.startService(serviceIntent);
         }
 

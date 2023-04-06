@@ -20,30 +20,28 @@
         android:hint="Gruppe"
         android:layout_below="@id/create_spinner_departments"/>
 
-    <EditText
-        android:id="@+id/create_et_time_start"
+    <CheckBox
+        android:id="@+id/create_checkbox_halle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/create_et_group"
-        android:ems="10"
-        android:inputType="time"
-        android:hint="von"/>
+        android:ems="6"
+        android:text="Sporthalle"/>
 
-    <EditText
-        android:id="@+id/create_et_time_end"
+    <CheckBox
+        android:id="@+id/create_checkbox_sportplatz"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/create_et_time_start"
+        android:layout_toEndOf="@+id/create_checkbox_halle"
         android:layout_below="@+id/create_et_group"
-        android:ems="10"
-        android:inputType="time"
-        android:hint="bis"/>
+        android:ems="6"
+        android:text="Sportplatz"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/create_weekday_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/create_et_time_start"/>
+        android:layout_below="@id/create_checkbox_halle"/>
 
     <Button
         android:id="@+id/create_save_course"

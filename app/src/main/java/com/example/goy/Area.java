@@ -2,13 +2,13 @@ package com.example.goy;
 
 import androidx.annotation.NonNull;
 
-public class Location {
+public class Area {
     private double latitude;
     private double longitude;
     private float radius;
     private String name;
 
-    public Location(double latitude, double longitude, float radius, String name){
+    public Area(double latitude, double longitude, float radius, String name){
         this.latitude = latitude;
         this.longitude = longitude;
         this.radius = radius;

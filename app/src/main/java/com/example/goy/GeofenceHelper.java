@@ -20,10 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GeofenceHelper {
-    private static final float GEOFENCE_RADIUS = 100;
     private static final String TAG = "GeofenceHelper";
-
-
     private Context ctx;
     private GeofencingClient geofencingClient;
     private PendingIntent pendingIntent;
@@ -35,15 +32,15 @@ public class GeofenceHelper {
     }
 
     @SuppressLint("MissingPermission")
-    public void addGeofence(List<Location> locations) {
+    public void addGeofence(List<Area> locations) {
         List<Geofence> geofenceList = new ArrayList<>();
-        for(Location location : locations){
+        for(Area location : locations){
             geofenceList.add(new Geofence.Builder()
                     .setRequestId(location.getName())
                     .setCircularRegion(location.getLatitude(), location.getLongitude(), location.getRadius())
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT |Geofence.GEOFENCE_TRANSITION_DWELL)
-                    .setLoiteringDelay(100000)
+                    .setLoiteringDelay(30000)
                     .build());
         }
         /**
@@ -56,7 +53,7 @@ public class GeofenceHelper {
                 .build();**/
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL)
                 .addGeofences(geofenceList)
                 .build();
 

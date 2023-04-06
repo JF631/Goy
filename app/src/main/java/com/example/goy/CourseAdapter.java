@@ -71,6 +71,8 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.courseTitle.setText(courseList.get(position).getGroup());
+        holder.courseDays.setText(courseList.get(position).getDaysFlattened());
+        holder.courseLocation.setText(courseList.get(position).getLocationsFlattened());
     }
 
     @Override
@@ -90,11 +92,13 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        TextView courseTitle;
+        TextView courseTitle, courseDays, courseLocation;
 
         public ViewHolder(@NonNull View itemView){
             super(itemView);
             courseTitle = itemView.findViewById(R.id.course_title);
+            courseDays = itemView.findViewById(R.id.course_days);
+            courseLocation = itemView.findViewById(R.id.course_location);
         }
     }
 }

@@ -10,9 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CheckedTextView;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -34,16 +37,16 @@ public class CreateFragment extends DialogFragment {
     private RecyclerView weekdayView;
     private Button saveBtn, exitBtn;
     private Spinner departmentSpinner;
-    private EditText etGroup, etTimeStart, etTimeEnd;
-    private LocalTime start, end;
+    private EditText etGroup;
+    private CheckBox cbHall, cbTrack;
     private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
-    private List<String> selected_days = new ArrayList<>();
+    private ArrayList<String> locations = new ArrayList<>();
+    private List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;
-    private DateTimeFormatter formatter;
 
     public interface OnCreateCourseClickedListener{
-        void onCreateCourseClicked(List<String> selectedDays, String department, String group, LocalTime start, LocalTime end);
+        void onCreateCourseClicked(List<Triple<String,LocalTime, LocalTime>> times, String department, String group, ArrayList<String> locations);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -56,30 +59,32 @@ public class CreateFragment extends DialogFragment {
         exitBtn = (Button) view.findViewById(R.id.create_exit);
         departmentSpinner = (Spinner) view.findViewById(R.id.create_spinner_departments);
         etGroup = (EditText) view.findViewById(R.id.create_et_group);
-        etTimeStart = (EditText) view.findViewById(R.id.create_et_time_start);
-        etTimeEnd = (EditText) view.findViewById(R.id.create_et_time_end);
+        cbHall = (CheckBox) view.findViewById(R.id.create_checkbox_halle);
+        cbTrack = (CheckBox) view.findViewById(R.id.create_checkbox_sportplatz);
 
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
         WeekdayAdapter adapter = new WeekdayAdapter(days);
         weekdayView.setAdapter(adapter);
 
-        formatter = DateTimeFormatter.ofPattern("HH:mm");
-        LocalTime currentTime = LocalTime.now();
-        LocalTime nextHour = currentTime.plusHours(1);
-        etTimeStart.setText(currentTime.format(formatter));
-        etTimeEnd.setText(nextHour.format(formatter));
-
         weekdayView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
                 View childView = rv.findChildViewUnder(e.getX(), e.getY());
-                if(childView != null && e.getAction() == MotionEvent.ACTION_UP){
-                    CheckedTextView checkedTextView = (CheckedTextView) childView.findViewById(R.id.create_weekday_item);
+                if(childView != null){
+                    CheckedTextView checkedTextView = childView.findViewById(R.id.create_weekday_item);
+                    TextView startTextView = childView.findViewById(R.id.create_start_item);
+                    TextView endTextView = childView.findViewById(R.id.create_end_item);
                     boolean isChecked = checkedTextView.isChecked();
+                    if(!isChecked && startTextView.getText().toString().equals("start") ||
+                            endTextView.getText().toString().equals("end")){
+                        return false;
+                    }
                     checkedTextView.setChecked(!isChecked);
-
-                    String day = adapter.getItem(rv.getChildAdapterPosition(childView));
-                    return isChecked ? selected_days.remove(day) : selected_days.add(day);
+                    String day = adapter.getItem(rv.getChildAdapterPosition(childView)).toUpperCase();
+                    LocalTime start = LocalTime.parse(startTextView.getText().toString());
+                    LocalTime end = LocalTime.parse(endTextView.getText().toString());
+                    Triple<String, LocalTime, LocalTime> time = new Triple<>(day, start, end);
+                    return isChecked ? timeList.remove(time) : timeList.add(time);
                 }
                 return false;
             }
@@ -95,17 +100,19 @@ public class CreateFragment extends DialogFragment {
             }
         });
 
-        etTimeStart.setOnClickListener(new View.OnClickListener() {
+        cbHall.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View view) {
-                showTimePickerDialog(etTimeStart);
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                boolean c = b ? locations.add(cbHall.getText().toString()) : locations.remove(cbHall.getText().toString());
+
             }
         });
 
-        etTimeEnd.setOnClickListener(new View.OnClickListener() {
+        cbTrack.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View view) {
-                showTimePickerDialog(etTimeEnd);
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                boolean c = b ? locations.add(cbTrack.getText().toString()) : locations.remove(cbTrack.getText().toString());
+
             }
         });
 
@@ -113,29 +120,33 @@ public class CreateFragment extends DialogFragment {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
-                if(selected_days.size() <= 0){
+                if(timeList.size() <= 0){
                     Toast.makeText(getActivity(), "Select at least one day", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                start = LocalTime.parse(etTimeStart.getText());
-                end = LocalTime.parse(etTimeEnd.getText());
-                if(start.equals(end) || end.isBefore(start)){
-                    Toast.makeText(getActivity(), "Cannot process the provided times", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(end.toString().isEmpty() || end.toString().isEmpty()){
-                    Toast.makeText(getActivity(), "enter times", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+
                 String group = etGroup.getText().toString();
                 if(group.isEmpty()){
                     Toast.makeText(getActivity(), "Provide a group name", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                onCreateCourseClickedListener.onCreateCourseClicked(selected_days,
+
+                for(Triple<String, LocalTime, LocalTime> time : timeList){
+                    if(time.getSecond().isAfter(time.getThird()) || time.getSecond().equals(time.getThird())){
+                        Toast.makeText(getActivity(), "Check your entered times", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+
+                if (locations.size() <= 0){
+                    Toast.makeText(getActivity(), "please select at least one location", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                onCreateCourseClickedListener.onCreateCourseClicked(
+                        timeList,
                         departmentSpinner.getSelectedItem().toString(),
                         group,
-                        start, end);
+                        locations);
                 dismiss();
             }
         });

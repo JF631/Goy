@@ -86,7 +86,10 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         courseAdapter.setOnItemClickListener(new CourseAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                Toast.makeText(MainActivity.this, "Dates: " + dbHelper.getDates(courseList.get(position)).toString(), Toast.LENGTH_SHORT).show();
+                List<LocalDate> dates = dbHelper.getDates(courseList.get(position));
+                List<String> locs = dbHelper.getLocations(courseList.get(position));
+                String times = dbHelper.getTimes(courseList.get(position)).toString();
+                Toast.makeText(MainActivity.this, "Dates: " + dates.toString(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -112,18 +115,22 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         add.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                GeofenceBroadcastReceiver receiver = new GeofenceBroadcastReceiver();
-                Intent intent = new Intent(MainActivity.this, GeofenceBroadcastReceiver.class);
-                receiver.onReceive(MainActivity.this, intent);
+                LocalDate date = LocalDate.now();
+                LocalTime start = LocalTime.parse("15:43");
+                LocalTime end = LocalTime.parse("16:43");
+                Course course = dbHelper.getCourse(date.getDayOfWeek(), new Pair<>(start, end));
+                List<Pair<LocalTime, LocalTime>> time = dbHelper.getTimesForWeekday(date.getDayOfWeek());
+                if(course == null) return false;
+                Toast.makeText(MainActivity.this, course.toString(), Toast.LENGTH_SHORT).show();
                 return true;
             }
         });
     }
 
     private void registerGeofence(){
-        List<Location> locations = new ArrayList<>();
-        locations.add(new Location(51.259864, 7.477231, 100, "Sportplatz"));
-        locations.add(new Location(51.260517, 7.469787, 200, "Sporthalle"));
+        List<Area> locations = new ArrayList<>();
+        locations.add(new Area(51.259864, 7.477231, 100, "Sportplatz"));
+        locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
         geofenceHelper.addGeofence(locations);
     }
 
@@ -172,11 +179,11 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void onCreateCourseClicked(List<String> selectedDays, String department, String group, LocalTime start, LocalTime end) {
-        TimeRange range = new TimeRange(start, end, selectedDays);
-        Course course = new Course(department, group, range);
+    public void onCreateCourseClicked(List<Triple<String, LocalTime, LocalTime>> selectedTimes, String department, String group, ArrayList<String> locations) {
+        Course course = new Course(MainActivity.this, department, group, selectedTimes);
         long id = dbHelper.insertCourse(course);
         course.setId(id);
+        dbHelper.insertLocations(course, locations);
         courseAdapter.insertItem(course);
     }
 }
