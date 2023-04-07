@@ -1,22 +1,17 @@
 package com.example.goy;
 
-import android.app.TimePickerDialog;
-import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CheckedTextView;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,21 +22,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class CreateFragment extends DialogFragment {
-    private RecyclerView weekdayView;
-    private Button saveBtn, exitBtn;
     private Spinner departmentSpinner;
     private EditText etGroup;
     private CheckBox cbHall, cbTrack;
     private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
-    private ArrayList<String> locations = new ArrayList<>();
-    private List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
+    private final ArrayList<String> locations = new ArrayList<>();
+    private final List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;
 
@@ -54,13 +45,13 @@ public class CreateFragment extends DialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.create_course_window, container, false);
-        weekdayView = (RecyclerView) view.findViewById(R.id.create_weekday_list);
-        saveBtn = (Button) view.findViewById(R.id.create_save_course);
-        exitBtn = (Button) view.findViewById(R.id.create_exit);
-        departmentSpinner = (Spinner) view.findViewById(R.id.create_spinner_departments);
-        etGroup = (EditText) view.findViewById(R.id.create_et_group);
-        cbHall = (CheckBox) view.findViewById(R.id.create_checkbox_halle);
-        cbTrack = (CheckBox) view.findViewById(R.id.create_checkbox_sportplatz);
+        RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
+        Button saveBtn = view.findViewById(R.id.create_save_course);
+        Button exitBtn = view.findViewById(R.id.create_exit);
+        departmentSpinner = view.findViewById(R.id.create_spinner_departments);
+        etGroup = view.findViewById(R.id.create_et_group);
+        cbHall = view.findViewById(R.id.create_checkbox_halle);
+        cbTrack = view.findViewById(R.id.create_checkbox_sportplatz);
 
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
         WeekdayAdapter adapter = new WeekdayAdapter(days);
@@ -100,88 +91,51 @@ public class CreateFragment extends DialogFragment {
             }
         });
 
-        cbHall.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                boolean c = b ? locations.add(cbHall.getText().toString()) : locations.remove(cbHall.getText().toString());
+        cbHall.setOnCheckedChangeListener((compoundButton, b) -> {
+            boolean c = b ? locations.add(cbHall.getText().toString()) : locations.remove(cbHall.getText().toString());
 
-            }
         });
 
-        cbTrack.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                boolean c = b ? locations.add(cbTrack.getText().toString()) : locations.remove(cbTrack.getText().toString());
+        cbTrack.setOnCheckedChangeListener((compoundButton, b) -> {
+            boolean c = b ? locations.add(cbTrack.getText().toString()) : locations.remove(cbTrack.getText().toString());
 
-            }
         });
 
-        saveBtn.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onClick(View view) {
-                if(timeList.size() <= 0){
-                    Toast.makeText(getActivity(), "Select at least one day", Toast.LENGTH_SHORT).show();
+        saveBtn.setOnClickListener(view1 -> {
+            if(timeList.size() <= 0){
+                Toast.makeText(getActivity(), "Select at least one day", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String group = etGroup.getText().toString();
+            if(group.isEmpty()){
+                Toast.makeText(getActivity(), "Provide a group name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            for(Triple<String, LocalTime, LocalTime> time : timeList){
+                if(time.getSecond().isAfter(time.getThird()) || time.getSecond().equals(time.getThird())){
+                    Toast.makeText(getActivity(), "Check your entered times", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
-                String group = etGroup.getText().toString();
-                if(group.isEmpty()){
-                    Toast.makeText(getActivity(), "Provide a group name", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                for(Triple<String, LocalTime, LocalTime> time : timeList){
-                    if(time.getSecond().isAfter(time.getThird()) || time.getSecond().equals(time.getThird())){
-                        Toast.makeText(getActivity(), "Check your entered times", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
-
-                if (locations.size() <= 0){
-                    Toast.makeText(getActivity(), "please select at least one location", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                onCreateCourseClickedListener.onCreateCourseClicked(
-                        timeList,
-                        departmentSpinner.getSelectedItem().toString(),
-                        group,
-                        locations);
-                dismiss();
             }
+
+            if (locations.size() <= 0){
+                Toast.makeText(getActivity(), "please select at least one location", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            onCreateCourseClickedListener.onCreateCourseClicked(
+                    timeList,
+                    departmentSpinner.getSelectedItem().toString(),
+                    group,
+                    locations);
+            dismiss();
         });
 
-        exitBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                dismiss();
-            }
-        });
+        exitBtn.setOnClickListener(view12 -> dismiss());
 
         return view;
     }
-
-    private void showTimePickerDialog(EditText et) {
-        final Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        final LocalTime[] selectedTime = new LocalTime[1];
-
-        TimePickerDialog timePickerDialog = new TimePickerDialog(getActivity(),
-                new TimePickerDialog.OnTimeSetListener() {
-                    @RequiresApi(api = Build.VERSION_CODES.O)
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay,
-                                          int minute) {
-                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                        calendar.set(Calendar.MINUTE, minute);
-                        selectedTime[0] = LocalTime.of(hourOfDay, minute);
-                        et.setText(selectedTime[0].toString());
-                    }
-                }, hour, minute, true);
-        timePickerDialog.show();
-    }
-
 
     public void setOnCreateCourseClickedListener(OnCreateCourseClickedListener listener){
         onCreateCourseClickedListener = listener;

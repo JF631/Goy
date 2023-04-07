@@ -4,7 +4,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,7 +12,7 @@ import java.util.List;
 
 public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder> {
 
-    private List<Course> courseList;
+    private final List<Course> courseList;
 
     public CourseAdapter(List<Course> courseList){
         this.courseList = courseList;
@@ -44,26 +43,20 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.course_item, parent, false);
         CourseAdapter.ViewHolder viewHolder = new CourseAdapter.ViewHolder(view);
 
-        view.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(onItemClickListener != null){
-                    int pos = viewHolder.getAdapterPosition();
-                    onItemClickListener.onItemClick(pos);
-                }
+        view.setOnClickListener(view12 -> {
+            if(onItemClickListener != null){
+                int pos = viewHolder.getAdapterPosition();
+                onItemClickListener.onItemClick(pos);
             }
         });
 
-        view.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                if(longClickListener != null){
-                    int pos = viewHolder.getAdapterPosition();
-                    longClickListener.onItemLongClick(pos);
-                    return true;
-                }
-                return false;
+        view.setOnLongClickListener(view1 -> {
+            if(longClickListener != null){
+                int pos = viewHolder.getAdapterPosition();
+                longClickListener.onItemLongClick(pos);
+                return true;
             }
+            return false;
         });
 
         return viewHolder;

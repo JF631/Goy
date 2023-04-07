@@ -1,14 +1,11 @@
 package com.example.goy;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.util.Log;
 
-import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -21,9 +18,9 @@ import java.util.List;
 
 public class GeofenceHelper {
     private static final String TAG = "GeofenceHelper";
-    private Context ctx;
-    private GeofencingClient geofencingClient;
-    private PendingIntent pendingIntent;
+    private final Context ctx;
+    private final GeofencingClient geofencingClient;
+    private final PendingIntent pendingIntent;
 
     public GeofenceHelper(Context ctx) {
         this.ctx = ctx;
@@ -53,12 +50,12 @@ public class GeofenceHelper {
                 .build();**/
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL)
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .addGeofences(geofenceList)
                 .build();
 
         geofencingClient.addGeofences(geofencingRequest, pendingIntent)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofenceList.toString()))
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence added: " + geofenceList))
                 .addOnFailureListener(e -> Log.d(TAG, "failed to add geofence", e));
     }
 

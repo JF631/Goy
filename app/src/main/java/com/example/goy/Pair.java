@@ -19,6 +19,6 @@ public class Pair<A, B> {
 
     @NonNull
     public String toString(){
-        return "(" + first.toString() + ", " + second.toString() + ")";
+        return "(" + first.toString() + "," + second.toString() + ")";
     }
 }

@@ -42,9 +42,6 @@ import java.util.stream.Collectors;
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class MainActivity extends AppCompatActivity implements CreateFragment.OnCreateCourseClickedListener {
 
-    private FloatingActionButton add;
-    private RecyclerView hour_view;
-    private Toolbar main_bar;
     private DataBaseHelper dbHelper;
     private CourseAdapter courseAdapter;
     private List<Course> courseList;
@@ -62,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
 
-        main_bar = (Toolbar) findViewById(R.id.main_toolbar);
+        Toolbar main_bar = findViewById(R.id.main_toolbar);
         setSupportActionBar(main_bar);
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
@@ -73,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
-        add = (FloatingActionButton) findViewById(R.id.main_add);
-        hour_view = (RecyclerView) findViewById(R.id.main_hours);
+        FloatingActionButton add = (FloatingActionButton) findViewById(R.id.main_add);
+        RecyclerView hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
         geofenceHelper = new GeofenceHelper(this);
 
@@ -89,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
                 List<LocalDate> dates = dbHelper.getDates(courseList.get(position));
                 List<String> locs = dbHelper.getLocations(courseList.get(position));
                 String times = dbHelper.getTimes(courseList.get(position)).toString();
-                Toast.makeText(MainActivity.this, "Dates: " + times, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Dates: " + dates, Toast.LENGTH_SHORT).show();
             }
         });
 

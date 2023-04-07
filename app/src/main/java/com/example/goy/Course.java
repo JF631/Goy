@@ -67,6 +67,10 @@ public class Course {
         return String.join(",", locations);
     }
 
+    public void setLocations(List<String> locations){
+        this.locations = locations;
+    }
+
     public long getId(){return courseId;}
 
     public String getStringId(){return Long.toString(courseId);}

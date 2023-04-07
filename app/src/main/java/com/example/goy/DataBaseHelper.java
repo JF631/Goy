@@ -8,26 +8,22 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "courses.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final String DATABASE_NAME = "schedules.db";
+    private static final int DATABASE_VERSION = 2;
     private static final String CREATE_COURSE_TABLE =
             "CREATE TABLE courses (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"+
@@ -85,7 +81,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         String query = "SELECT c.id AS course_id, c.department_name, c.group_name, " +
                 "t.weekday, t.startTime, t.endTime " +
                 "FROM courses AS c " +
-                "LEFT JOIN course_times AS t ON c.id = t.courseId " +
+                "JOIN course_times AS t ON c.id = t.courseId " +
                 "ORDER BY c.id ASC";
         SQLiteDatabase db = this.getReadableDatabase();
         List<Course> courses = new ArrayList<>();
@@ -96,6 +92,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             List<Triple<String, LocalTime, LocalTime>> foundTimes = new ArrayList<>();
             String department = cursor.getString(cursor.getColumnIndexOrThrow("department_name"));
             String group = cursor.getString(cursor.getColumnIndexOrThrow("group_name"));
+
             do {
                 LocalTime start = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("startTime")));
                 LocalTime end = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("endTime")));
@@ -110,6 +107,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         }
         db.close();
         cursor.close();
+        setLocations(courses);
         return courses;
     }
 
@@ -152,7 +150,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         while (cursor.moveToNext()){
             String startString = cursor.getString(cursor.getColumnIndexOrThrow("startTime"));
             String endString = cursor.getString(cursor.getColumnIndexOrThrow("endTime"));
-            rtrn.add(new Pair<LocalTime, LocalTime>(LocalTime.parse(startString), LocalTime.parse(endString)));
+            rtrn.add(new Pair<>(LocalTime.parse(startString), LocalTime.parse(endString)));
         }
         cursor.close();
         db.close();
@@ -234,12 +232,13 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         }
 
         List<String> locations = course.getLocations();
-        for(String location : locations){
-            ContentValues locationInfo = new ContentValues();
-            locationInfo.put("courseId", rtrn);
-            locationInfo.put("location", location);
-            db.insert("course_locations", null, locationInfo);
+        for (String loc : locations){
+            ContentValues locInfo = new ContentValues();
+            locInfo.put("location", loc);
+            locInfo.put("courseId", rtrn);
+            db.insert("course_locations", null, locInfo);
         }
+
         db.close();
         return rtrn;
     }
@@ -284,7 +283,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<Triple<String, LocalTime, LocalTime>> getTimes(Course course){
+    public List<Triple<String, LocalTime, LocalTime>> getTimes(@NonNull Course course){
         SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {"startTime", "endTime", "weekday"};
         String selection = "courseId = ?";
@@ -306,7 +305,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return rtrn;
     }
 
-    public void insertLocations(Course course, ArrayList<String> locations){
+    public void insertLocations(@NonNull Course course, @NonNull ArrayList<String> locations){
         SQLiteDatabase db = this.getWritableDatabase();
         String id = course.getStringId();
 
@@ -320,7 +319,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    public List<String> getLocations(Course course){
+    public List<String> getLocations(@NonNull Course course){
         SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {"location"};
         String selection = "courseId = ?";
@@ -333,27 +332,37 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
             rtrn.add(loc);
         }
-
+        cursor.close();
         db.close();
         return rtrn;
     }
 
-    public boolean deleteCourse(Course course){
+    private void setLocations(@NonNull List<Course> courses){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {"location"};
+        String selection = "courseId = ?";
+
+        for(Course course : courses){
+            String[] args = {course.getStringId()};
+            List<String> locations = new ArrayList<>();
+            Cursor cursor = db.query("course_locations", projection, selection, args, null, null, null);
+
+            while (cursor.moveToNext()){
+                locations.add(cursor.getString(cursor.getColumnIndexOrThrow("location")));
+            }
+            cursor.close();
+            course.setLocations(locations);
+        }
+        db.close();
+    }
+
+    public boolean deleteCourse(@NonNull Course course){
         SQLiteDatabase db = this.getWritableDatabase();
-        Log.d("delete id: ", course.getStringId());
         try {
-            if(db.delete("courses", "id = ?", new String[]{course.getStringId()}) < 1){
-                Log.d("deletion fail: ", "course table");
-            }
-            if(db.delete("course_times", "courseId = ?", new String[]{course.getStringId()}) < 1){
-                Log.d("deletion fail: ", "times table");
-            }
-            if(db.delete("course_locations", "courseId = ?", new String[]{course.getStringId()}) < 1){
-                Log.d("deletion fail: ", "location table");
-            }
-            if(db.delete("course_date", "courseId = ?", new String[]{course.getStringId()}) < 1){
-                Log.d("deletion fail: ", "date table");
-            }
+            db.delete("courses", "id = ?", new String[]{course.getStringId()});
+            db.delete("course_date", "courseId = ?", new String[]{course.getStringId()});
+            db.delete("course_times", "courseId = ?", new String[]{course.getStringId()});
+            db.delete("course_locations", "courseId = ?", new String[]{course.getStringId()});
         }catch (SQLException e){
             Log.e("sql deletion error: ", e.toString());
             db.close();
