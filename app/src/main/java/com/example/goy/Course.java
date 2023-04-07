@@ -3,6 +3,7 @@ package com.example.goy;
 import android.content.Context;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -16,21 +17,22 @@ import java.util.stream.Collectors;
 
 public class Course {
     private String department, group;
-    private Context ctx;
     private long courseId = -1;
     private List<Triple<String, LocalTime, LocalTime>> courseTimes;
-    public Course(Context ctx, String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes){
-        this.ctx = ctx;
+    private List<String> locations;
+    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, List<String> locations){
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
+        this.locations = locations;
     }
 
-    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, int id){
+    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, int id, List<String> locations){
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
         this.courseId = id;
+        this.locations = locations;
     }
 
     public Course(String department, String group, int id){
@@ -55,15 +57,14 @@ public class Course {
     }
 
     public List<String> getLocations(){
-        if(ctx == null) return null;
-        DataBaseHelper dataBaseHelper  = new DataBaseHelper(ctx);
-       return dataBaseHelper.getLocations(this);
+        if(locations == null) return null;
+        return locations;
     }
 
     public String getLocationsFlattened(){
-        if(ctx == null) return null;
-        DataBaseHelper dataBaseHelper  = new DataBaseHelper(ctx);
-        return TextUtils.join(",", dataBaseHelper.getLocations(this));
+        if(locations == null) return null;
+        Log.d("COURSE: ", locations.toString());
+        return String.join(",", locations);
     }
 
     public long getId(){return courseId;}

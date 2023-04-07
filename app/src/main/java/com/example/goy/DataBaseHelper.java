@@ -26,7 +26,7 @@ import java.util.List;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "schedules.db";
+    private static final String DATABASE_NAME = "courses.db";
     private static final int DATABASE_VERSION = 1;
     private static final String CREATE_COURSE_TABLE =
             "CREATE TABLE courses (" +
@@ -85,7 +85,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         String query = "SELECT c.id AS course_id, c.department_name, c.group_name, " +
                 "t.weekday, t.startTime, t.endTime " +
                 "FROM courses AS c " +
-                "JOIN course_times AS t ON c.id = t.courseId " +
+                "LEFT JOIN course_times AS t ON c.id = t.courseId " +
                 "ORDER BY c.id ASC";
         SQLiteDatabase db = this.getReadableDatabase();
         List<Course> courses = new ArrayList<>();
@@ -96,7 +96,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             List<Triple<String, LocalTime, LocalTime>> foundTimes = new ArrayList<>();
             String department = cursor.getString(cursor.getColumnIndexOrThrow("department_name"));
             String group = cursor.getString(cursor.getColumnIndexOrThrow("group_name"));
-
             do {
                 LocalTime start = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("startTime")));
                 LocalTime end = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("endTime")));
@@ -105,11 +104,12 @@ public class DataBaseHelper extends SQLiteOpenHelper {
                         end));
             }while (cursor.moveToNext() && cursor.getInt(cursor.getColumnIndexOrThrow("course_id")) == id);
 
-            Course course = new Course(department, group, foundTimes, id);
+            Course course = new Course(department, group, foundTimes, id, null);
             courses.add(course);
-
+            cursor.moveToPrevious();
         }
-
+        db.close();
+        cursor.close();
         return courses;
     }
 
@@ -232,6 +232,15 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             timeInfo.put("courseId", rtrn);
             db.insert("course_times", null, timeInfo);
         }
+
+        List<String> locations = course.getLocations();
+        for(String location : locations){
+            ContentValues locationInfo = new ContentValues();
+            locationInfo.put("courseId", rtrn);
+            locationInfo.put("location", location);
+            db.insert("course_locations", null, locationInfo);
+        }
+        db.close();
         return rtrn;
     }
 
@@ -247,6 +256,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             rtrn = new Pair<>(cursor.getString(cursor.getColumnIndexOrThrow("department_name")),
                     cursor.getString(cursor.getColumnIndexOrThrow("group_name")));
         }
+        cursor.close();
+        db.close();
         return rtrn;
     }
 
@@ -323,16 +334,26 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             rtrn.add(loc);
         }
 
+        db.close();
         return rtrn;
     }
 
     public boolean deleteCourse(Course course){
         SQLiteDatabase db = this.getWritableDatabase();
+        Log.d("delete id: ", course.getStringId());
         try {
-            db.delete("courses", "id = ?", new String[]{course.getStringId()});
-            db.delete("course_date", "courseId = ?", new String[]{course.getStringId()});
-            db.delete("course_times", "courseId = ?", new String[]{course.getStringId()});
-            db.delete("course_locations", "courseId = ?", new String[]{course.getStringId()});
+            if(db.delete("courses", "id = ?", new String[]{course.getStringId()}) < 1){
+                Log.d("deletion fail: ", "course table");
+            }
+            if(db.delete("course_times", "courseId = ?", new String[]{course.getStringId()}) < 1){
+                Log.d("deletion fail: ", "times table");
+            }
+            if(db.delete("course_locations", "courseId = ?", new String[]{course.getStringId()}) < 1){
+                Log.d("deletion fail: ", "location table");
+            }
+            if(db.delete("course_date", "courseId = ?", new String[]{course.getStringId()}) < 1){
+                Log.d("deletion fail: ", "date table");
+            }
         }catch (SQLException e){
             Log.e("sql deletion error: ", e.toString());
             db.close();

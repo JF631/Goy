@@ -76,10 +76,10 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         add = (FloatingActionButton) findViewById(R.id.main_add);
         hour_view = (RecyclerView) findViewById(R.id.main_hours);
         dbHelper = new DataBaseHelper(this);
-
         geofenceHelper = new GeofenceHelper(this);
 
         courseList = dbHelper.getCourses();
+        Log.d("MAIN", courseList.toString());
         courseAdapter = new CourseAdapter(courseList);
         hour_view.setLayoutManager(new LinearLayoutManager(this));
         hour_view.setAdapter(courseAdapter);
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
                 List<LocalDate> dates = dbHelper.getDates(courseList.get(position));
                 List<String> locs = dbHelper.getLocations(courseList.get(position));
                 String times = dbHelper.getTimes(courseList.get(position)).toString();
-                Toast.makeText(MainActivity.this, "Dates: " + dates.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Dates: " + times, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -180,10 +180,11 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreateCourseClicked(List<Triple<String, LocalTime, LocalTime>> selectedTimes, String department, String group, ArrayList<String> locations) {
-        Course course = new Course(MainActivity.this, department, group, selectedTimes);
+        Course course = new Course(department, group, selectedTimes, locations);
         long id = dbHelper.insertCourse(course);
+        if(id == -1) Log.e("FATAL", "couldn't add course");
+        Log.d("id: ", Long.toString(id));
         course.setId(id);
-        dbHelper.insertLocations(course, locations);
         courseAdapter.insertItem(course);
     }
 }
