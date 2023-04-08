@@ -1,7 +1,6 @@
 package com.example.goy;
 
 import android.app.DatePickerDialog;
-import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -108,6 +107,6 @@ public class CourseFragment extends Fragment {
         titleView.setText(course.getGroup());
         dayView.setText(times);
         locationView.setText(locations);
-        listTitleView.setText("Kurs wurde an folgenden Terminen gehalten: \n");
+        listTitleView.setText(course.getGroup() + " wurde an folgenden Terminen gehalten: \n");
     }
 }

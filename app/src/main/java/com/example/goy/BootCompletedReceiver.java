@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 public class BootCompletedReceiver extends BroadcastReceiver {
 
@@ -18,6 +19,8 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     public void registerFences(Context context){
         GeofenceHelper geofenceHelper = new GeofenceHelper(context);
         geofenceHelper.registerStandardFences();
+        NotificationHelper notificationHelper = new NotificationHelper(context);
+        notificationHelper.createNotification("Fence created", "fences re-registered");
         Log.d(TAG, "fences re-registered");
     }
 }
