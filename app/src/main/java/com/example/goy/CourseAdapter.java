@@ -19,7 +19,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
     }
 
     public interface OnItemClickListener{
-        void onItemClick(int position);
+        void onItemClick(int position, View sharedView);
     }
     private OnItemClickListener onItemClickListener;
 
@@ -46,7 +46,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
         view.setOnClickListener(view12 -> {
             if(onItemClickListener != null){
                 int pos = viewHolder.getAdapterPosition();
-                onItemClickListener.onItemClick(pos);
+                onItemClickListener.onItemClick(pos, view);
             }
         });
 

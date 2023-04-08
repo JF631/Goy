@@ -9,13 +9,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
 public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
-    private final List<Date> dateList;
+    private final List<LocalDate> dateList;
 
-    public DateAdapter(List<Date> dateList){
+    public DateAdapter(List<LocalDate> dateList){
         this.dateList = dateList;
     }
 

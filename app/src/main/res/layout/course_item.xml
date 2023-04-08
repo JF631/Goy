@@ -8,7 +8,8 @@
     android:layout_margin="8dp"
     android:background="@drawable/card_background"
     android:elevation="2dp"
-    app:cardCornerRadius="7dp">
+    app:cardCornerRadius="7dp"
+    android:transitionName="card_transition">
 
     <RelativeLayout
         android:layout_width="match_parent"

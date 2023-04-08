@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +20,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -29,6 +32,7 @@ import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -40,11 +44,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
-public class MainActivity extends AppCompatActivity implements CreateFragment.OnCreateCourseClickedListener {
+public class MainActivity extends AppCompatActivity {
 
-    private DataBaseHelper dbHelper;
-    private CourseAdapter courseAdapter;
-    private List<Course> courseList;
     private GeofenceHelper geofenceHelper;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1, PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2,
             PERMISSIONS_REQUEST_NOTIFICATIONS = 3;
@@ -56,6 +57,16 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        // Add the fragment to the layout
+        HomeFragment homeFragment = new HomeFragment();
+        fragmentTransaction.add(R.id.fragment_container_view, homeFragment);
+
+        // Commit the transaction
+        fragmentTransaction.commit();
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
 
@@ -70,58 +81,7 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
 
-        FloatingActionButton add = (FloatingActionButton) findViewById(R.id.main_add);
-        RecyclerView hour_view = (RecyclerView) findViewById(R.id.main_hours);
-        dbHelper = new DataBaseHelper(this);
         geofenceHelper = new GeofenceHelper(this);
-
-        courseList = dbHelper.getCourses();
-        Log.d("MAIN", courseList.toString());
-        courseAdapter = new CourseAdapter(courseList);
-        hour_view.setLayoutManager(new LinearLayoutManager(this));
-        hour_view.setAdapter(courseAdapter);
-        courseAdapter.setOnItemClickListener(new CourseAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(int position) {
-                List<LocalDate> dates = dbHelper.getDates(courseList.get(position));
-                List<String> locs = dbHelper.getLocations(courseList.get(position));
-                String times = dbHelper.getTimes(courseList.get(position)).toString();
-                Toast.makeText(MainActivity.this, "Dates: " + dates, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        courseAdapter.setOnItemLongClickListener(new CourseAdapter.OnItemLongClickListener() {
-            @Override
-            public void onItemLongClick(int pos) {
-                if(pos != RecyclerView.NO_POSITION) {
-                    if(dbHelper.deleteCourse(courseList.get(pos))) {
-                        courseAdapter.deleteItem(pos);
-                        //Toast.makeText(MainActivity.this, courseList.get(pos).getDepartment(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        });
-
-        add.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showFragment();
-            }
-        });
-
-        add.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                LocalDate date = LocalDate.now();
-                LocalTime start = LocalTime.parse("15:43");
-                LocalTime end = LocalTime.parse("16:43");
-                Course course = dbHelper.getCourse(date.getDayOfWeek(), new Pair<>(start, end));
-                List<Pair<LocalTime, LocalTime>> time = dbHelper.getTimesForWeekday(date.getDayOfWeek());
-                if(course == null) return false;
-                Toast.makeText(MainActivity.this, course.toString(), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
     }
 
     private void registerGeofence(){
@@ -129,12 +89,6 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
         locations.add(new Area(51.259864, 7.477231, 100, "Sportplatz"));
         locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
         geofenceHelper.addGeofence(locations);
-    }
-
-    private void showFragment(){
-        CreateFragment createFragment = new CreateFragment();
-        createFragment.show(getSupportFragmentManager(), "create_course");
-        createFragment.setOnCreateCourseClickedListener(this);
     }
 
     @Override
@@ -171,17 +125,5 @@ public class MainActivity extends AppCompatActivity implements CreateFragment.On
                 Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    public void onCreateCourseClicked(List<Triple<String, LocalTime, LocalTime>> selectedTimes, String department, String group, ArrayList<String> locations) {
-        Course course = new Course(department, group, selectedTimes, locations);
-        long id = dbHelper.insertCourse(course);
-        if(id == -1) Log.e("FATAL", "couldn't add course");
-        Log.d("id: ", Long.toString(id));
-        course.setId(id);
-        courseAdapter.insertItem(course);
     }
 }
