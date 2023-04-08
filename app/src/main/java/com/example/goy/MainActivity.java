@@ -85,10 +85,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void registerGeofence(){
-        List<Area> locations = new ArrayList<>();
-        locations.add(new Area(51.259864, 7.477231, 100, "Sportplatz"));
-        locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
-        geofenceHelper.addGeofence(locations);
+        geofenceHelper.registerStandardFences();
     }
 
     @Override

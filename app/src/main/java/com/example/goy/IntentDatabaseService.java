@@ -56,7 +56,6 @@ public class IntentDatabaseService extends IntentService {
             return;
         }
 
-
         for(Pair<LocalTime, LocalTime> time : timeList){
             if(currentTime.isAfter(time.getFirst()) && currentTime.isBefore(time.getSecond())){
                 Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);

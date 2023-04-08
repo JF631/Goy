@@ -29,7 +29,7 @@ public class GeofenceHelper {
     }
 
     @SuppressLint("MissingPermission")
-    public void addGeofence(List<Area> locations) {
+    public void addGeofences(List<Area> locations) {
         List<Geofence> geofenceList = new ArrayList<>();
         for(Area location : locations){
             geofenceList.add(new Geofence.Builder()
@@ -40,14 +40,6 @@ public class GeofenceHelper {
                     .setLoiteringDelay(30000)
                     .build());
         }
-        /**
-        Geofence geofence = new Geofence.Builder()
-                .setRequestId(geofenceId)
-                .setCircularRegion(latitude, longitude, GEOFENCE_RADIUS)
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT | Geofence.GEOFENCE_TRANSITION_DWELL)
-                .setLoiteringDelay(10000)
-                .build();**/
 
         GeofencingRequest geofencingRequest = new GeofencingRequest.Builder()
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
@@ -75,6 +67,13 @@ public class GeofenceHelper {
         return false;
     }
 
+    public void registerStandardFences(){
+        List<Area> locations = new ArrayList<>();
+        locations.add(new Area(51.259864, 7.477231, 100, "Sportplatz"));
+        locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
+
+        addGeofences(locations);
+    }
 
     private PendingIntent createGeofencingPendingIntent(){
         Intent intent = new Intent(ctx, GeofenceBroadcastReceiver.class);

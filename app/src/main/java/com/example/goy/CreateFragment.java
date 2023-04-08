@@ -32,7 +32,7 @@ public class CreateFragment extends DialogFragment {
     private CheckBox cbHall, cbTrack;
     private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
     private final ArrayList<String> locations = new ArrayList<>();
-    private final List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
+    private List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;
 
@@ -57,38 +57,26 @@ public class CreateFragment extends DialogFragment {
         WeekdayAdapter adapter = new WeekdayAdapter(days);
         weekdayView.setAdapter(adapter);
 
-        weekdayView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                View childView = rv.findChildViewUnder(e.getX(), e.getY());
-                if(childView != null){
-                    CheckedTextView checkedTextView = childView.findViewById(R.id.create_weekday_item);
-                    TextView startTextView = childView.findViewById(R.id.create_start_item);
-                    TextView endTextView = childView.findViewById(R.id.create_end_item);
-                    boolean isChecked = checkedTextView.isChecked();
-                    if(!isChecked && startTextView.getText().toString().equals("start") ||
-                            endTextView.getText().toString().equals("end")){
-                        return false;
-                    }
-                    checkedTextView.setChecked(!isChecked);
-                    String day = adapter.getItem(rv.getChildAdapterPosition(childView)).toUpperCase();
-                    LocalTime start = LocalTime.parse(startTextView.getText().toString());
-                    LocalTime end = LocalTime.parse(endTextView.getText().toString());
-                    Triple<String, LocalTime, LocalTime> time = new Triple<>(day, start, end);
-                    return isChecked ? timeList.remove(time) : timeList.add(time);
+        adapter.setOnItemClickListener((pos, itemView) -> {
+            CheckedTextView checkedTextView = itemView.findViewById(R.id.create_weekday_item);
+            TextView startTextView = itemView.findViewById(R.id.create_start_item);
+            TextView endTextView = itemView.findViewById(R.id.create_end_item);
+            boolean isChecked = checkedTextView.isChecked();
+            if(!isChecked && startTextView.getText().toString().equals("start") ||
+                    endTextView.getText().toString().equals("end")){
+                return;
+            }
+            String day = adapter.getItem(pos).toUpperCase();
+            LocalTime start = LocalTime.parse(startTextView.getText().toString());
+            LocalTime end = LocalTime.parse(endTextView.getText().toString());
+            Triple<String, LocalTime, LocalTime> time = new Triple<>(day, start, end);
+            for(Triple<String, LocalTime, LocalTime> currentlySaved : timeList){
+                if(currentlySaved.getFirst().equals(time.getFirst())) {
+                    timeList.remove(currentlySaved);
                 }
-                return false;
             }
-
-            @Override
-            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-
-            }
-
-            @Override
-            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-
-            }
+            timeList.add(time);
+            checkedTextView.setChecked(!isChecked);
         });
 
         cbHall.setOnCheckedChangeListener((compoundButton, b) -> {

@@ -16,7 +16,17 @@ import java.util.List;
 
 public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHolder> {
 
-    private List<String> weekdays;
+    private final List<String> weekdays;
+
+    public interface OnItemClickListener{
+        void onItemClick(int position, View itemView);
+    }
+
+    private WeekdayAdapter.OnItemClickListener onItemClickListener;
+
+    public void setOnItemClickListener(WeekdayAdapter.OnItemClickListener listener){
+        this.onItemClickListener = listener;
+    }
 
     public WeekdayAdapter(List<String> weekdays){
         this.weekdays = weekdays;
@@ -27,25 +37,21 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.weekday_item, parent, false);
-        return new ViewHolder(view);
+        ViewHolder viewHolder = new WeekdayAdapter.ViewHolder(view);
+        view.setOnClickListener(view1 -> {
+            if (onItemClickListener != null){
+                int pos = viewHolder.getAdapterPosition();
+                onItemClickListener.onItemClick(pos, view);
+            }
+        });
+        return viewHolder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull WeekdayAdapter.ViewHolder holder, int position) {
         holder.checkedTextView.setText(weekdays.get(position));
-        holder.startTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getTime(view, holder.startTime);
-            }
-        });
-
-        holder.endTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getTime(view, holder.endTime);
-            }
-        });
+        holder.startTime.setOnClickListener(view -> getTime(view, holder.startTime));
+        holder.endTime.setOnClickListener(view -> getTime(view, holder.endTime));
     }
 
     private void getTime(View view, TextView textView){
@@ -53,12 +59,7 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        TimePickerDialog timePickerDialog = new TimePickerDialog(view.getContext(), new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker timePicker, int i, int i1) {
-               textView.setText(String.format("%02d:%02d", i, i1));
-            }
-        }, hour, minute, true);
+        TimePickerDialog timePickerDialog = new TimePickerDialog(view.getContext(), (timePicker, i, i1) -> textView.setText(String.format("%02d:%02d", i, i1)), hour, minute, true);
 
         timePickerDialog.show();
 

@@ -6,7 +6,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,12 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HomeFragment extends Fragment implements CreateFragment.OnCreateCourseClickedListener {
-
     private CourseAdapter courseAdapter;
     private DataBaseHelper dataBaseHelper;
 
     public HomeFragment(){}
-
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
@@ -46,15 +45,14 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
         homeView.setAdapter(courseAdapter);
 
         courseAdapter.setOnItemClickListener((position, sharedView) -> {
-            List<LocalDate> courseDates = dataBaseHelper.getDates(courseList.get(position));
-            //if(courseDates.isEmpty())return;
-
             CourseFragment courseFragment = new CourseFragment();
             Bundle bundle = new Bundle();
             bundle.putParcelable("course", courseList.get(position));
             courseFragment.setArguments(bundle);
             FragmentManager fragmentManager = getParentFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.anim_scale_cardview);
+            sharedView.startAnimation(animation);
             fragmentTransaction.replace(R.id.fragment_container_view, courseFragment);
             fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
@@ -68,7 +66,7 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
             List<LocalDate> dates = dataBaseHelper.getDates(courseList.get(position));
             List<String> locs = dataBaseHelper.getLocations(courseList.get(position));
             String times = dataBaseHelper.getTimes(courseList.get(position)).toString();
-            Toast.makeText(getContext(), "Dates: " + dates, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getContext(), "Dates: " + dates, Toast.LENGTH_SHORT).show();
         });
 
 
@@ -82,12 +80,7 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
 
         });
 
-        addBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showCreate();
-            }
-        });
+        addBtn.setOnClickListener(view1 -> showCreate());
 
         return view;
     }

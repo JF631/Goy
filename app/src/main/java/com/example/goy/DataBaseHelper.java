@@ -16,6 +16,7 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,19 +189,29 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return true;
     }
 
+    public boolean deleteDate(Course course, String date){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = "courseId = ? AND date = ?";
+        String[] args = {course.getStringId(), date};
+
+        return db.delete("course_date", selection, args) > 0;
+
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<LocalDate> getDates(Course course){
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withZone(ZoneOffset.UTC);
         SQLiteDatabase db = this.getReadableDatabase();
         List<LocalDate> rtrn = new ArrayList<>();
         String[] projection = {"date"};
         String selection = "courseId = ?";
         String[] args = {course.getStringId()};
 
-        Cursor cursor = db.query("course_date", projection, selection, args, null, null, null);
+        Cursor cursor = db.query("course_date", projection, selection, args, null, null, "substr(date, 7)||'-'||substr(date, 4, 2)||'-'||substr(date, 1, 2) DESC");
 
         while (cursor.moveToNext()){
             String dateString = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+            Log.d("TEST: ", "date: " + LocalDate.parse(dateString, dateFormat).format(dateFormat));
             rtrn.add(LocalDate.parse(dateString, dateFormat));
         }
         cursor.close();
