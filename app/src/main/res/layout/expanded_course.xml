@@ -32,15 +32,19 @@
                 android:id="@+id/expand_course_days"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/expanded_course_title"
-                />
+                android:layout_below="@+id/expanded_course_title" />
 
             <TextView
                 android:id="@+id/expand_course_locations"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/expand_course_days"
-                />
+                android:layout_below="@+id/expand_course_days"/>
+
+            <TextView
+                android:id="@+id/expand_course_department"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/expand_course_locations"/>
 
             <TextView
                 android:id="@+id/expand_recycler_title"
@@ -49,7 +53,7 @@
                 android:textStyle="bold"
                 android:textSize="20sp"
                 android:layout_marginTop="20dp"
-                android:layout_below="@+id/expand_course_locations"/>
+                android:layout_below="@+id/expand_course_department"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:padding="20dp"

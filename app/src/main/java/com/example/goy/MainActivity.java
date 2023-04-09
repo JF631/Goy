@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
@@ -30,7 +32,9 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationBarView;
 
 import java.io.Serializable;
 import java.time.DayOfWeek;
@@ -80,8 +84,22 @@ public class MainActivity extends AppCompatActivity {
                     requiredPermissions,
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
-
         geofenceHelper = new GeofenceHelper(this);
+
+        BottomNavigationView bottomNavigationView = findViewById(R.id.navigation_bar);
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            switch (item.getItemId()){
+                case R.id.item_dateList:
+                    selectedFragment = new DepartmentFragment();
+                    break;
+                case R.id.item_home:
+                    selectedFragment = new HomeFragment();
+                    break;
+            }
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, selectedFragment).commit();
+            return true;
+        });
     }
 
     private void registerGeofence(){

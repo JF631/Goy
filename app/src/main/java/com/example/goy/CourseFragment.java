@@ -21,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.w3c.dom.Text;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -48,6 +50,7 @@ public class CourseFragment extends Fragment {
 
         FloatingActionButton fabDate = view.findViewById(R.id.add_date);
         fabDate.setOnClickListener(view1 -> {
+            List<String> courseDays = dataBaseHelper.getWeekDays(course);
             Calendar calendar = Calendar.getInstance();
             int year = calendar.get(Calendar.YEAR);
             int month = calendar.get(Calendar.MONTH);
@@ -56,7 +59,9 @@ public class CourseFragment extends Fragment {
                 @Override
                 public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                     LocalDate selectedDate = LocalDate.of(year, month + 1, dayOfMonth);
-                    dataBaseHelper.insertDate(course, selectedDate.format(formatter));
+                    if(!courseDays.contains(selectedDate.getDayOfWeek().toString()))
+                        return;
+                    dataBaseHelper.insertDate(course, selectedDate);
                     dateAdapter.insertItem(selectedDate);
                 }
             }, year, month, dayOfMonth);
@@ -94,6 +99,7 @@ public class CourseFragment extends Fragment {
         TextView dayView = view.findViewById(R.id.expand_course_days);
         TextView locationView = view.findViewById(R.id.expand_course_locations);
         TextView listTitleView = view.findViewById(R.id.expand_recycler_title);
+        TextView departmentView = view.findViewById(R.id.expand_course_department);
 
         String times = "Kurszeiten: \n";
         List<Triple<String, LocalTime, LocalTime>> weekTimes = course.getCourseTimes();
@@ -103,10 +109,13 @@ public class CourseFragment extends Fragment {
                     " bis " + weekTime.getThird() + "\n";
         }
         String locations = "Kursorte: \n" +
-                course.getLocationsFlattened().replaceAll(",", " und ");
+                course.getLocationsFlattened().replaceAll(",", " und ") + "\n";
+        String department = "Abteilung: \n" +
+                course.getDepartment() + "\n";
         titleView.setText(course.getGroup());
         dayView.setText(times);
         locationView.setText(locations);
+        departmentView.setText(department);
         listTitleView.setText(course.getGroup() + " wurde an folgenden Terminen gehalten: \n");
     }
 }

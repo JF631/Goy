@@ -10,6 +10,7 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.time.DayOfWeek;
@@ -37,6 +38,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"  +
                     "courseId INTEGER, " +
                     "date TEXT, " +
+                    "duration TEXT, " +
                     "FOREIGN KEY(courseId) REFERENCES course(id))";
 
     private static final String CREATE_TIME_TABLE =
@@ -160,11 +162,13 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
 
-    private boolean dateExists(Course course, String date){
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private boolean dateExists(Course course, LocalDate date){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {"date"};
         String selection = "courseId = ? AND date = ?";
-        String[] args = {course.getStringId(), date};
+        String[] args = {course.getStringId(), date.format(formatter)};
 
         Cursor cursor = db.query("course_date", projection, selection, args, null, null, null);
 
@@ -174,16 +178,54 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return rtrn;
     }
 
-    public boolean insertDate(Course course, String date){
+    public String getDuration(Course course, DayOfWeek dayOfWeek){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {"duration"};
+        String selection = "courseId = ? AND weekday = ?";
+        String[] args = {course.getStringId(), dayOfWeek.toString()};
+
+        Cursor cursor = db.query("course_times", projection, selection, args, null, null, null);
+        if(cursor.moveToFirst()){
+            return cursor.getString(cursor.getColumnIndexOrThrow("duration"));
+        }
+        cursor.close();
+        db.close();
+        return null;
+    }
+
+    public List<String> getWeekDays(Course course){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {"weekday"};
+        String selection = "courseId = ?";
+        String[] args = {course.getStringId()};
+        List<String> weekdays = new ArrayList<>();
+
+        Cursor cursor = db.query("course_times", projection, selection, args, null, null, null);
+        while (cursor.moveToNext()){
+            String day = cursor.getString(cursor.getColumnIndexOrThrow("weekday"));
+            if(!weekdays.contains(day)){
+                weekdays.add(day);
+            }
+        }
+        cursor.close();
+        db.close();
+        return weekdays;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public boolean insertDate(Course course, LocalDate date){
         if(course.getId() == -1){
             Log.e("Course Failure: ", "couldn't get course id" );
             return false;
         }
+        String duration = getDuration(course, date.getDayOfWeek());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         if(dateExists(course, date)){return false;}
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("courseId", course.getId());
-        values.put("date", date);
+        values.put("date", date.format(formatter));
+        values.put("duration", duration);
         db.insert("course_date", null, values);
         db.close();
         return true;
@@ -217,6 +259,47 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
 
+        return rtrn;
+    }
+
+    private List<Course> getCourses(String department){
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Course> courses = new ArrayList<>();
+        String[] projection = {"id", "group_name"};
+        String selection = "department_name = ?";
+        String[] args = {department};
+
+        Cursor idCursor = db.query("courses", projection, selection, args, null, null, null);
+        while (idCursor.moveToNext()){
+            int id = idCursor.getInt(idCursor.getColumnIndexOrThrow("id"));
+            String group = idCursor.getString(idCursor.getColumnIndexOrThrow("group_name"));
+            Course course = new Course(department, group, id);
+            courses.add(course);
+        }
+        idCursor.close();
+        return courses;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<Course, LocalDate>> getDates(@NonNull String department, @Nullable LocalDate start, @Nullable LocalDate end){
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withZone(ZoneOffset.UTC);
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
+        List<Course> courses = getCourses(department);
+        String[] projection = {"date"};
+        String selection = "courseId = ?";
+
+        for(Course course : courses){
+            Cursor cursor = db.query("course_date", projection, selection, new String[]{course.getStringId()}, null, null, null);
+            while (cursor.moveToNext()){
+                String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                LocalDate cDate = LocalDate.parse(courseDate, dateFormat);
+                Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
+                rtrn.add(courseDatePair);
+            }
+            cursor.close();
+        }
+        db.close();
         return rtrn;
     }
 

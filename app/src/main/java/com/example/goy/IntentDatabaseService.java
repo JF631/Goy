@@ -17,7 +17,6 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class IntentDatabaseService extends IntentService {
     private static final String TAG = "IntentDatabaseService";
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public IntentDatabaseService(){
         super("insertDateService");
@@ -46,7 +45,7 @@ public class IntentDatabaseService extends IntentService {
                     if(currentTime.isAfter(time.getSecond())){
                         Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);
                         if(dataBaseHelper.getLocations(course).contains(location)){
-                            if (!dataBaseHelper.insertDate(course, date.format(dateFormat))){
+                            if (!dataBaseHelper.insertDate(course, date)){
                                 Log.d(TAG, "location couldn't be inserted");
                             }
                         }
@@ -61,7 +60,7 @@ public class IntentDatabaseService extends IntentService {
                 Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);
                 Log.d(TAG, "course id: "  + course.getStringId());
                 if(dataBaseHelper.getLocations(course).contains(location)){
-                    if(!dataBaseHelper.insertDate(course, date.format(dateFormat))) {
+                    if(!dataBaseHelper.insertDate(course, date)) {
                         Log.d(TAG, "location couldn't be inserted");
                     }
                 }else {

@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi;
 
 import java.nio.channels.ClosedChannelException;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +79,14 @@ public class Course implements Parcelable {
     public String getStringId(){return Long.toString(courseId);}
 
     public void setId(long id){this.courseId = id;}
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<LocalDate> getDates(Context ctx){
+        DataBaseHelper dbHelper = new DataBaseHelper(ctx);
+        List<LocalDate> dateList = dbHelper.getDates(this);
+        dbHelper.close();
+        return dateList;
+    }
 
     @NonNull
     public String toString(){
