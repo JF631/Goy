@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         // Commit the transaction
         fragmentTransaction.commit();
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS};
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
         Toolbar main_bar = findViewById(R.id.main_toolbar);
         setSupportActionBar(main_bar);

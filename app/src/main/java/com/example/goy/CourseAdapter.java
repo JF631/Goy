@@ -1,11 +1,13 @@
 package com.example.goy;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -74,9 +76,28 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
         return courseList.size();
     }
 
-    public void deleteItem(int pos){
-        courseList.remove(pos);
-        notifyItemRemoved(pos);
+    public void deleteItem(int pos, Context ctx){
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
+
+        Course course = courseList.get(pos);
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
+                .setTitle("Datum löschen?")
+                .setMessage("Möchten Sie den Kurs " + course.getGroup() + " entgültig Löschen?\n" +
+                        "ACHTUNG: Es werden alle zugehörigen Termine gelöscht!")
+                .setCancelable(false)
+                .setPositiveButton("Löschen", (dialogInterface, i) -> {
+                    if(dataBaseHelper.deleteCourse(courseList.get(pos))){
+                        courseList.remove(pos);
+                        notifyItemRemoved(pos);
+                    }
+                    dialogInterface.dismiss();
+
+                })
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                });
+        AlertDialog dialog = alertBuilder.create();
+        dialog.show();
     }
 
     public void insertItem(Course course){

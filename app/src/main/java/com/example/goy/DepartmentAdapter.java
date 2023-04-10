@@ -68,7 +68,13 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        holder.dateView.setText(courseList.get(position).getSecond().format(formatter));
+        Course course = courseList.get(position).getFirst();
+        LocalDate date = courseList.get(position).getSecond();
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(holder.ctx);
+        String duration = dataBaseHelper.getDuration(course, date.getDayOfWeek());
+        holder.dateView.setText(date.format(formatter));
+        holder.durationView.setText(duration);
+        holder.courseView.setText(course.getGroup());
     }
 
     @Override
@@ -82,10 +88,14 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{
-        TextView dateView;
+        TextView dateView, durationView, courseView;
+        Context ctx;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             dateView = itemView.findViewById(R.id.simple_date_row);
+            durationView = itemView.findViewById(R.id.simple_duration_row);
+            courseView = itemView.findViewById(R.id.simple_course_row);
+            ctx = itemView.getContext();
         }
     }
 }

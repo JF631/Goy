@@ -8,8 +8,7 @@
         android:id="@+id/department_spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:entries="@array/departments"/>
+        android:layout_gravity="top" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/department_dates_view"

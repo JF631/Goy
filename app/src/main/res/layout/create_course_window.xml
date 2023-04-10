@@ -8,8 +8,7 @@
     <Spinner
         android:id="@+id/create_spinner_departments"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/departments" />
+        android:layout_height="wrap_content" />
 
     <EditText
         android:id="@+id/create_et_group"

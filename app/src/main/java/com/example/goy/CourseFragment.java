@@ -44,7 +44,7 @@ public class CourseFragment extends Fragment {
         CardView cardView = view.findViewById(R.id.expanded_item);
         RecyclerView dateView = view.findViewById(R.id.show_course_dates);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        DateAdapter dateAdapter = new DateAdapter(dateList);
+        DateAdapter dateAdapter = new DateAdapter(dateList, course);
         dateView.setAdapter(dateAdapter);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -70,25 +70,7 @@ public class CourseFragment extends Fragment {
         });
 
         dateAdapter.setOnItemLongClickListener(pos -> {
-            String date = dateList.get(pos).format(formatter);
-            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getContext())
-                    .setTitle("Datum löschen?")
-                    .setMessage("Möchten Sie den " + date + " aus der Liste entfernen?")
-                    .setCancelable(false)
-                    .setPositiveButton("Löschen", (dialogInterface, i) -> {
-                        if(!dataBaseHelper.deleteDate(course, date)){
-                            Toast.makeText(getContext(), "Es ist ein Fehler aufgetreten", Toast.LENGTH_SHORT).show();
-                        }else {
-                            dateAdapter.deleteItem(pos);
-                        }
-                        dialogInterface.dismiss();
-
-                    })
-                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                        dialogInterface.dismiss();
-                    });
-            AlertDialog dialog = alertBuilder.create();
-            dialog.show();
+            dateAdapter.deleteItem(pos, getContext());
 
         });
         return view;

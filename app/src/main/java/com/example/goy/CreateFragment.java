@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CheckedTextView;
@@ -33,6 +34,8 @@ public class CreateFragment extends DialogFragment {
     private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
     private final ArrayList<String> locations = new ArrayList<>();
     private List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
+    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
+
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;
 
@@ -48,7 +51,9 @@ public class CreateFragment extends DialogFragment {
         RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
         Button saveBtn = view.findViewById(R.id.create_save_course);
         Button exitBtn = view.findViewById(R.id.create_exit);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
         departmentSpinner = view.findViewById(R.id.create_spinner_departments);
+        departmentSpinner.setAdapter(spinnerAdapter);
         etGroup = view.findViewById(R.id.create_et_group);
         cbHall = view.findViewById(R.id.create_checkbox_halle);
         cbTrack = view.findViewById(R.id.create_checkbox_sportplatz);

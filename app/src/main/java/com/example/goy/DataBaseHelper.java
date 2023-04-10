@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import java.text.DecimalFormat;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -295,7 +296,17 @@ public class DataBaseHelper extends SQLiteOpenHelper {
                 String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
                 LocalDate cDate = LocalDate.parse(courseDate, dateFormat);
                 Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
-                rtrn.add(courseDatePair);
+                if(start == null && end == null){
+                    rtrn.add(courseDatePair);
+                } else if (start == null && end != null) {
+                    if (cDate.isBefore(end)){
+                        rtrn.add(courseDatePair);
+                    }
+                }else if (start != null && end == null){
+                    if (cDate.isAfter(start)){
+                        rtrn.add(courseDatePair);
+                    }
+                }
             }
             cursor.close();
         }
@@ -305,6 +316,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public long insertCourse(Course course){
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         String duration;
         SQLiteDatabase db = this.getWritableDatabase();
@@ -316,7 +328,10 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         List<Triple<String, LocalTime, LocalTime>> times = course.getCourseTimes();
         for(Triple<String, LocalTime, LocalTime> time : times){
             ContentValues timeInfo = new ContentValues();
-            duration = Long.toString(Duration.between(time.getSecond(), time.getThird()).toMinutes());
+            long durationMins = Duration.between(time.getSecond(), time.getThird()).toMinutes();
+            Log.d("DBHelper", Long.toString(durationMins));
+            double durationHours = durationMins / 60.0;
+            duration = decimalFormat.format(durationHours);
             timeInfo.put("weekday", time.getFirst());
             timeInfo.put("startTime", time.getSecond().format(formatter));
             timeInfo.put("endTime", time.getThird().format(formatter));

@@ -1,17 +1,21 @@
 package com.example.goy;
 
 import android.Manifest;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -37,6 +41,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +52,9 @@ public class DepartmentFragment extends Fragment{
     private static final String REQ_PERMISSIONS = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
     private ActivityResultLauncher<String[]> documentPickerLauncher;
+    List<Pair<Course, LocalDate>> courseDateList;
+    private static DataBaseHelper dataBaseHelper;
+    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
 
     public DepartmentFragment(){}
 
@@ -54,12 +63,16 @@ public class DepartmentFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.department_date_view, container, false);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
+        dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
         String department = dpSpinner.getSelectedItem().toString();
-        DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
-        List<Pair<Course, LocalDate>> courseDateList = dataBaseHelper.getDates(department, null, null);
+        dataBaseHelper = new DataBaseHelper(getContext());
+        courseDateList = dataBaseHelper.getDates(department, null, null);
+        Comparator<Pair<Course, LocalDate>> byDate = Comparator.comparing(Pair::getSecond);
+        courseDateList.sort(byDate.reversed());
         documentPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) {
                 Log.d("DP", uri.getPath());
@@ -82,8 +95,9 @@ public class DepartmentFragment extends Fragment{
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String selected = adapterView.getItemAtPosition(i).toString();
-                List<Pair<Course, LocalDate>> newList = dataBaseHelper.getDates(selected, null, null);
-                departmentAdapter.switchDepartment(newList);
+                courseDateList = dataBaseHelper.getDates(selected, null, null);
+                courseDateList.sort(byDate.reversed());
+                departmentAdapter.switchDepartment(courseDateList);
             }
 
             @Override
@@ -96,6 +110,7 @@ public class DepartmentFragment extends Fragment{
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList){
         int size = courseLocalDateList.size();
         if (size >= 43){
@@ -103,21 +118,30 @@ public class DepartmentFragment extends Fragment{
             return;
         }
         try {
-            File pdfFile = new File(getContext().getExternalFilesDir(null), "test.pdf");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            File[] downloadDirs = getContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
+            String downloadDir = downloadDirs[0].getAbsolutePath();
+            File pdfFile = new File(downloadDir, "test.pdf");
+            Log.d("PATH:", downloadDir);
             InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
             PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
             Map<String, PdfFormField> fields = form.getFormFields();
             int d = 0;
             String dateKey = "", durationKey = "";
-            for(int i=0; i<43/*replace with size!!!*/; ++i){
+            for(int i=0; i<size; ++i){
                 if(i % 22 == 0 && i != 0)  d = 1;
                 dateKey = "dt1." + (i % 22) + "." + d;
                 durationKey = "du1." + (i % 22) + "." + d;
                 if (fields.containsKey(dateKey) && fields.containsKey(durationKey)){
-                    Log.d("TEST", dateKey);
+                    Log.d("TEST", "save");
+                    LocalDate localDate = courseLocalDateList.get(i).getSecond();
+                    String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
+                    fields.get(dateKey).setValue(localDate.format(formatter));
+                    fields.get(durationKey).setValue(duration);
                 }
             }
+            pdfDoc.close();
 
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
