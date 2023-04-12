@@ -2,18 +2,19 @@ package com.example.goy;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.Fade;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -21,7 +22,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,14 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.home_view, container, false);
         RecyclerView homeView = view.findViewById(R.id.home_course_view);
-        FloatingActionButton addBtn = view.findViewById(R.id.add_course);
+        FloatingActionButton addButton = view.findViewById(R.id.add_course);
+
+        Transition sharedElementTransition = TransitionInflater.from(getContext())
+                .inflateTransition(android.R.transition.move);
+        sharedElementTransition.addTarget(addButton);
+
+        getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
+
         dataBaseHelper = new DataBaseHelper(getContext());
         List<Course> courseList = dataBaseHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
@@ -52,22 +59,17 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
             courseFragment.setArguments(bundle);
             FragmentManager fragmentManager = getParentFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.anim_scale_cardview);
-            sharedView.startAnimation(animation);
+            courseFragment.setSharedElementEnterTransition(TransitionInflater.from(getContext())
+                    .inflateTransition(android.R.transition.move));
+            courseFragment.setEnterTransition(new Fade());
+            setExitTransition(new Fade());
+            courseFragment.setSharedElementReturnTransition(TransitionInflater.from(getContext())
+                    .inflateTransition(android.R.transition.move));
+            fragmentTransaction.addSharedElement(addButton, "add_button");
             fragmentTransaction.replace(R.id.fragment_container_view, courseFragment);
             fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
-
-            /**
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.setReorderingAllowed(true);
-            ft.addSharedElement(view, "card_transition");
-            createFragment.show(ft, "show_dates");**/
-
-            List<LocalDate> dates = dataBaseHelper.getDates(courseList.get(position));
-            List<String> locs = dataBaseHelper.getLocations(courseList.get(position));
-            String times = dataBaseHelper.getTimes(courseList.get(position)).toString();
-            //Toast.makeText(getContext(), "Dates: " + dates, Toast.LENGTH_SHORT).show();
+            ((MainActivity) requireActivity()).hideNavBar();
         });
 
 
@@ -78,11 +80,12 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
 
         });
 
-        addBtn.setOnClickListener(view1 -> showCreate());
+        addButton.setOnClickListener(view1 -> showCreate());
 
         return view;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void showCreate(){
         CreateFragment createFragment = new CreateFragment();
         createFragment.show(getChildFragmentManager(), "create_course");

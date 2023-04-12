@@ -3,29 +3,29 @@ package com.example.goy;
 import android.app.DatePickerDialog;
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.DatePicker;
+import android.view.animation.TranslateAnimation;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.w3c.dom.Text;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.List;
 
@@ -46,7 +46,15 @@ public class CourseFragment extends Fragment {
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
         DateAdapter dateAdapter = new DateAdapter(dateList, course);
         dateView.setAdapter(dateAdapter);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        FloatingActionButton addButton = view.findViewById(R.id.add_date);
+        addButton.setTransitionName("add_button");
+
+        Transition sharedElementTransition = TransitionInflater.from(getContext())
+                .inflateTransition(android.R.transition.move);
+        sharedElementTransition.addTarget(addButton);
+
+        getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
 
         FloatingActionButton fabDate = view.findViewById(R.id.add_date);
         fabDate.setOnClickListener(view1 -> {
@@ -55,15 +63,12 @@ public class CourseFragment extends Fragment {
             int year = calendar.get(Calendar.YEAR);
             int month = calendar.get(Calendar.MONTH);
             int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
-            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
-                @Override
-                public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                    LocalDate selectedDate = LocalDate.of(year, month + 1, dayOfMonth);
-                    if(!courseDays.contains(selectedDate.getDayOfWeek().toString()))
-                        return;
-                    dataBaseHelper.insertDate(course, selectedDate);
-                    dateAdapter.insertItem(selectedDate);
-                }
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
+                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
+                if(!courseDays.contains(selectedDate.getDayOfWeek().toString()))
+                    return;
+                dataBaseHelper.insertDate(course, selectedDate);
+                dateAdapter.insertItem(selectedDate);
             }, year, month, dayOfMonth);
 
             datePickerDialog.show();
@@ -100,4 +105,12 @@ public class CourseFragment extends Fragment {
         departmentView.setText(department);
         listTitleView.setText(course.getGroup() + " wurde an folgenden Terminen gehalten: \n");
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        ((MainActivity) requireActivity()).showNavBar();
+    }
+
 }

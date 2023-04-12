@@ -18,14 +18,15 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class DataBaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "schedules.db";
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final int DATABASE_VERSION = 2;
     private static final String CREATE_COURSE_TABLE =
             "CREATE TABLE courses (" +
@@ -38,7 +39,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             "CREATE TABLE course_date (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT,"  +
                     "courseId INTEGER, " +
-                    "date TEXT, " +
+                    "date DATE, " +
                     "duration TEXT, " +
                     "FOREIGN KEY(courseId) REFERENCES course(id))";
 
@@ -165,7 +166,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private boolean dateExists(Course course, LocalDate date){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         SQLiteDatabase db = this.getReadableDatabase();
         String[] projection = {"date"};
         String selection = "courseId = ? AND date = ?";
@@ -220,7 +220,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             return false;
         }
         String duration = getDuration(course, date.getDayOfWeek());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         if(dateExists(course, date)){return false;}
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -232,7 +231,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    public boolean deleteDate(Course course, String date){
+    public boolean deleteDate(Course course, LocalDate localDate){
+        String date = localDate.format(formatter);
         SQLiteDatabase db = this.getWritableDatabase();
         String selection = "courseId = ? AND date = ?";
         String[] args = {course.getStringId(), date};
@@ -243,19 +243,18 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<LocalDate> getDates(Course course){
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withZone(ZoneOffset.UTC);
         SQLiteDatabase db = this.getReadableDatabase();
         List<LocalDate> rtrn = new ArrayList<>();
         String[] projection = {"date"};
         String selection = "courseId = ?";
         String[] args = {course.getStringId()};
 
-        Cursor cursor = db.query("course_date", projection, selection, args, null, null, "substr(date, 7)||'-'||substr(date, 4, 2)||'-'||substr(date, 1, 2) DESC");
+        Cursor cursor = db.query("course_date", projection, selection, args, null, null, "date DESC");
 
         while (cursor.moveToNext()){
             String dateString = cursor.getString(cursor.getColumnIndexOrThrow("date"));
-            Log.d("TEST: ", "date: " + LocalDate.parse(dateString, dateFormat).format(dateFormat));
-            rtrn.add(LocalDate.parse(dateString, dateFormat));
+            Log.d("TEST: ", "date: " + LocalDate.parse(dateString, formatter).format(formatter));
+            rtrn.add(LocalDate.parse(dateString, formatter));
         }
         cursor.close();
         db.close();
@@ -283,32 +282,32 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Pair<Course, LocalDate>> getDates(@NonNull String department, @Nullable LocalDate start, @Nullable LocalDate end){
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy").withZone(ZoneOffset.UTC);
         SQLiteDatabase db = this.getReadableDatabase();
         List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
         List<Course> courses = getCourses(department);
         String[] projection = {"date"};
         String selection = "courseId = ?";
-
+        List<String> args = new ArrayList<>();
+        if(start != null){
+            selection += " AND date >= ?";
+            args.add(start.format(formatter));
+        }
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+            Log.d("args: ", args.toString());
+        }
         for(Course course : courses){
-            Cursor cursor = db.query("course_date", projection, selection, new String[]{course.getStringId()}, null, null, null);
+            args.add(0, course.getStringId());
+            Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
             while (cursor.moveToNext()){
                 String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
-                LocalDate cDate = LocalDate.parse(courseDate, dateFormat);
+                LocalDate cDate = LocalDate.parse(courseDate, formatter);
                 Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
-                if(start == null && end == null){
-                    rtrn.add(courseDatePair);
-                } else if (start == null && end != null) {
-                    if (cDate.isBefore(end)){
-                        rtrn.add(courseDatePair);
-                    }
-                }else if (start != null && end == null){
-                    if (cDate.isAfter(start)){
-                        rtrn.add(courseDatePair);
-                    }
-                }
+                rtrn.add(courseDatePair);
             }
             cursor.close();
+            args.remove(0);
         }
         db.close();
         return rtrn;
@@ -317,7 +316,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public long insertCourse(Course course){
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         String duration;
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues basicInfo = new ContentValues();
@@ -333,8 +332,8 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             double durationHours = durationMins / 60.0;
             duration = decimalFormat.format(durationHours);
             timeInfo.put("weekday", time.getFirst());
-            timeInfo.put("startTime", time.getSecond().format(formatter));
-            timeInfo.put("endTime", time.getThird().format(formatter));
+            timeInfo.put("startTime", time.getSecond().format(timeFormatter));
+            timeInfo.put("endTime", time.getThird().format(timeFormatter));
             timeInfo.put("duration", duration);
             timeInfo.put("courseId", rtrn);
             db.insert("course_times", null, timeInfo);

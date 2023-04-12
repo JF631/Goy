@@ -88,7 +88,7 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void deleteItem(int pos, Context ctx){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
         LocalDate date = dateList.get(pos);
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
@@ -96,7 +96,7 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
                 .setMessage("Möchten Sie den " + date.format(formatter) + " aus der Liste entfernen?")
                 .setCancelable(false)
                 .setPositiveButton("Löschen", (dialogInterface, i) -> {
-                    if(!dataBaseHelper.deleteDate(course, date.format(formatter))){
+                    if(!dataBaseHelper.deleteDate(course, date)){
                         Toast.makeText(ctx, "Es ist ein Fehler aufgetreten", Toast.LENGTH_SHORT).show();
                     }else {
                         dateList.remove(pos);

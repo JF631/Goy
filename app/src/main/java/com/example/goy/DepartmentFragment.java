@@ -1,10 +1,10 @@
 package com.example.goy;
 
 import android.Manifest;
-import android.app.DownloadManager;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -31,7 +32,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormField;
-import com.itextpdf.io.codec.Base64;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -42,18 +42,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 
-public class DepartmentFragment extends Fragment{
+@RequiresApi(api = Build.VERSION_CODES.O)
+public class DepartmentFragment extends Fragment implements CreatePersonFragment.OnPersonCreateClickedListener{
 
     private static final String REQ_PERMISSIONS = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
     private ActivityResultLauncher<String[]> documentPickerLauncher;
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
 
     public DepartmentFragment(){}
@@ -66,13 +70,56 @@ public class DepartmentFragment extends Fragment{
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
+        TextView startDate = view.findViewById(R.id.department_start_date);
+        TextView endDate = view.findViewById(R.id.department_end_date);
         dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
         String department = dpSpinner.getSelectedItem().toString();
-        dataBaseHelper = new DataBaseHelper(getContext());
-        courseDateList = dataBaseHelper.getDates(department, null, null);
+        AtomicReference<String> start = new AtomicReference<>(), end = new AtomicReference<>();
         Comparator<Pair<Course, LocalDate>> byDate = Comparator.comparing(Pair::getSecond);
+        if (start.get() == null) startDate.setText("start");
+        else startDate.setText(start.toString());
+        if(end.get() == null)endDate.setText("end");
+        else endDate.setText(end.toString());
+
+        dataBaseHelper = new DataBaseHelper(getContext());
+        courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
         courseDateList.sort(byDate.reversed());
+        DepartmentAdapter departmentAdapter = new DepartmentAdapter(courseDateList);
+        dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        dateView.setAdapter(departmentAdapter);
+
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+        startDate.setOnClickListener(view1 -> {
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
+                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
+                start.set(selectedDate.format(formatter));
+                startDate.setText(start.toString());
+                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+                courseDateList.sort(byDate.reversed());
+                departmentAdapter.switchDepartment(courseDateList);
+            }, year, month, dayOfMonth);
+
+            datePickerDialog.show();
+        });
+
+        endDate.setOnClickListener(view1 -> {
+            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
+                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
+                end.set(selectedDate.format(formatter));
+                endDate.setText(end.toString());
+                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+                courseDateList.sort(byDate.reversed());
+                departmentAdapter.switchDepartment(courseDateList);
+            }, year, month, dayOfMonth);
+
+            datePickerDialog.show();
+        });
+
         documentPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) {
                 Log.d("DP", uri.getPath());
@@ -83,19 +130,17 @@ public class DepartmentFragment extends Fragment{
         });
 
         floatingActionButton.setOnClickListener(view1 -> {
-            requestPermissions();
+            SharedPreferences sharedPreferences = getActivity().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+            if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
+            else requestPermissions();
 
         });
-
-        DepartmentAdapter departmentAdapter = new DepartmentAdapter(courseDateList);
-        dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        dateView.setAdapter(departmentAdapter);
 
         dpSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String selected = adapterView.getItemAtPosition(i).toString();
-                courseDateList = dataBaseHelper.getDates(selected, null, null);
+                courseDateList = dataBaseHelper.getDates(selected, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
                 courseDateList.sort(byDate.reversed());
                 departmentAdapter.switchDepartment(courseDateList);
             }
@@ -106,19 +151,22 @@ public class DepartmentFragment extends Fragment{
             }
         });
 
+        departmentAdapter.setOnItemLongClickListener(pos -> {
+            departmentAdapter.deleteItem(pos, getContext());
+        });
+
         return view;
     }
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList){
+    private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList) {
         int size = courseLocalDateList.size();
-        if (size >= 43){
+        if (size >= 43) {
             Toast.makeText(getContext(), "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             File[] downloadDirs = getContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
             String downloadDir = downloadDirs[0].getAbsolutePath();
             File pdfFile = new File(downloadDir, "test.pdf");
@@ -129,11 +177,11 @@ public class DepartmentFragment extends Fragment{
             Map<String, PdfFormField> fields = form.getFormFields();
             int d = 0;
             String dateKey = "", durationKey = "";
-            for(int i=0; i<size; ++i){
-                if(i % 22 == 0 && i != 0)  d = 1;
+            for (int i = 0; i < size; ++i) {
+                if (i % 22 == 0 && i != 0) d = 1;
                 dateKey = "dt1." + (i % 22) + "." + d;
                 durationKey = "du1." + (i % 22) + "." + d;
-                if (fields.containsKey(dateKey) && fields.containsKey(durationKey)){
+                if (fields.containsKey(dateKey) && fields.containsKey(durationKey)) {
                     Log.d("TEST", "save");
                     LocalDate localDate = courseLocalDateList.get(i).getSecond();
                     String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
@@ -150,8 +198,15 @@ public class DepartmentFragment extends Fragment{
         }
     }
 
+    private void showCreate(){
+        CreatePersonFragment createPersonFragment = new CreatePersonFragment();
+        createPersonFragment.show(getChildFragmentManager(), "create_person");
+        createPersonFragment.setOnPersonCreateClickedListener(this);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void requestPermissions(){
+
         String mimeType = "application/pdf";
 
         // Create an intent to open the document chooser
@@ -166,5 +221,18 @@ public class DepartmentFragment extends Fragment{
 
         // Start the document chooser activity
         documentPickerLauncher.launch(new String[]{mimeType});
+    }
+
+    @Override
+    public void onPersonCreateClicked(String name, String surname, String iban, String bic, String bank) {
+        SharedPreferences sharedPreferences  = getActivity().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("name", name);
+        editor.putString("surname", surname);
+        if(iban != null) editor.putString("iban", iban);
+        if(bic != null) editor.putString("iban", bic);
+        if(bank != null) editor.putString("iban", bank);
+        editor.apply();
+        requestPermissions();
     }
 }

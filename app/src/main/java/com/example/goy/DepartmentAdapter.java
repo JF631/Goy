@@ -6,18 +6,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.ViewHolder>{
 
     private List<Pair<Course, LocalDate>> courseList;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public DepartmentAdapter(List<Pair<Course, LocalDate>> courseList){
         this.courseList = courseList;
@@ -43,7 +47,7 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.simple_date_item, parent,false);
-        ViewHolder viewHolder = new DepartmentAdapter.ViewHolder(view);
+        ViewHolder viewHolder = new ViewHolder(view);
 
         view.setOnClickListener(view1 -> {
            if(onItemClickListener != null){
@@ -85,6 +89,32 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
     public void switchDepartment(List<Pair<Course, LocalDate>> courseList){
         this.courseList = courseList;
         notifyDataSetChanged();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void deleteItem(int pos, Context ctx){
+        LocalDate date = courseList.get(pos).getSecond();
+        String course = courseList.get(pos).getFirst().getGroup();
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
+        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
+                .setTitle("Datum löschen?")
+                .setMessage("Möchten Sie den " + date.format(formatter) + " vom Kurs " + course + " löschen?")
+                .setCancelable(false)
+                .setPositiveButton("Löschen", (dialogInterface, i) -> {
+                    if(!dataBaseHelper.deleteDate(courseList.get(pos).getFirst(), date)){
+                        Toast.makeText(ctx, "Es ist ein Fehler aufgetreten", Toast.LENGTH_SHORT).show();
+                    }else {
+                        courseList.remove(pos);
+                        notifyItemRemoved(pos);
+                    }
+                    dialogInterface.dismiss();
+
+                })
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                });
+        AlertDialog dialog = alertBuilder.create();
+        dialog.show();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{

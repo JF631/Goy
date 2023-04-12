@@ -13,10 +13,11 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_course"
+        android:transitionName="add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/material_dynamic_tertiary50"
-        android:layout_marginBottom="65dp"
+        android:layout_marginBottom="90dp"
+        android:layout_marginRight="10dp"
         android:clickable="true"
         android:contentDescription="TODO"
         android:elevation="16dp"
@@ -24,6 +25,6 @@
         android:visibility="visible"
         android:layout_gravity="bottom|end"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        app:srcCompat="@drawable/fab_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

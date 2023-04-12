@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -97,9 +98,23 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new HomeFragment();
                     break;
             }
+
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, selectedFragment).commit();
             return true;
         });
+    }
+
+    public void hideNavBar(){
+        BottomNavigationView bottomNavigationView = findViewById(R.id.navigation_bar);
+        int height = bottomNavigationView.getHeight();
+        bottomNavigationView.animate().translationY(height).setDuration(300);
+        bottomNavigationView.setVisibility(View.GONE);
+    }
+
+    public void showNavBar(){
+        BottomNavigationView bottomNavigationView = findViewById(R.id.navigation_bar);
+        bottomNavigationView.setVisibility(View.VISIBLE);
+        bottomNavigationView.animate().translationY(0).setDuration(300);
     }
 
     private void registerGeofence(){

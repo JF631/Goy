@@ -3,7 +3,6 @@ package com.example.goy;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -43,10 +42,12 @@ public class CreateFragment extends DialogFragment {
         void onCreateCourseClicked(List<Triple<String,LocalTime, LocalTime>> times, String department, String group, ArrayList<String> locations);
     }
 
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        setStyle(DialogFragment.STYLE_NO_TITLE, R.style.RoundedDialogTheme);
         View view = inflater.inflate(R.layout.create_course_window, container, false);
         RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
         Button saveBtn = view.findViewById(R.id.create_save_course);
