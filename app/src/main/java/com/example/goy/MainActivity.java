@@ -146,7 +146,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION){
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) registerGeofence();
+                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    registerGeofence();
+                    getSharedPrefs();
+                    invalidateOptionsMenu();
+                }
                 //granted
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
                         ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED){
@@ -162,6 +166,8 @@ public class MainActivity extends AppCompatActivity {
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 Toast.makeText(this, "thanks for allowing location access", Toast.LENGTH_SHORT).show();
                 registerGeofence();
+                getSharedPrefs();
+                invalidateOptionsMenu();
             }else {
                 Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
             }

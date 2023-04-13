@@ -68,7 +68,7 @@ public class GeofenceHelper {
     public void registerStandardFences(){
         List<Area> locations = new ArrayList<>();
         locations.add(new Area(51.259864, 7.477231, 100, "Sportplatz"));
-        locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
+        locations.add(new Area(51.260517, 7.469787, 100, "Sporthalle"));
 
         addGeofences(locations);
     }
