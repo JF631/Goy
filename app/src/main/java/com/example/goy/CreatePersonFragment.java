@@ -35,7 +35,6 @@ public class CreatePersonFragment extends DialogFragment {
         Button btnSave = view.findViewById(R.id.create_save);
         Button btnCancel = view.findViewById(R.id.create_cancel);
 
-
         btnCancel.setOnClickListener(view1 -> {
             dismiss();
         });
@@ -43,7 +42,7 @@ public class CreatePersonFragment extends DialogFragment {
         btnSave.setOnClickListener(view1 -> {
             if(validateInput()){
                 String name = nameEdit.getText().toString();
-                String surname = nameEdit.getText().toString();
+                String surname = surnameEdit.getText().toString();
                 String iban = ibanEdit.getText().toString().isEmpty() ? null : ibanEdit.getText().toString();
                 String bic = bicEdit.getText().toString().isEmpty() ? null : bicEdit.getText().toString();
                 String bank = bankEdit.getText().toString().isEmpty() ? null : bankEdit.getText().toString();

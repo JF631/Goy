@@ -41,7 +41,7 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
         FloatingActionButton addButton = view.findViewById(R.id.add_course);
 
         Transition sharedElementTransition = TransitionInflater.from(getContext())
-                .inflateTransition(android.R.transition.move);
+                .inflateTransition(android.R.transition.slide_bottom);
         sharedElementTransition.addTarget(addButton);
 
         getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);

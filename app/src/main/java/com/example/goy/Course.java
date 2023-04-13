@@ -83,7 +83,7 @@ public class Course implements Parcelable {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<LocalDate> getDates(Context ctx){
         DataBaseHelper dbHelper = new DataBaseHelper(ctx);
-        List<LocalDate> dateList = dbHelper.getDates(this);
+        List<LocalDate> dateList = dbHelper.getDates(this, true);
         dbHelper.close();
         return dateList;
     }

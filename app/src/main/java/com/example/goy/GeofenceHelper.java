@@ -51,10 +51,8 @@ public class GeofenceHelper {
                 .addOnFailureListener(e -> Log.d(TAG, "failed to add geofence", e));
     }
 
-    public void removeGeofence(String geofenceId){
-        List<String> ids = new ArrayList<>();
-        ids.add(geofenceId);
-        geofencingClient.removeGeofences(ids)
+    public void removeGeofences(List<String> geofenceIds){
+        geofencingClient.removeGeofences(geofenceIds)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "geofence removed"))
                 .addOnFailureListener(e -> Log.d(TAG, "failed to remove geofence", e));
     }
@@ -73,6 +71,13 @@ public class GeofenceHelper {
         locations.add(new Area(51.260517, 7.469787, 200, "Sporthalle"));
 
         addGeofences(locations);
+    }
+
+    public void removeStandardFences(){
+        List<String> ids = new ArrayList<>();
+        ids.add("Sportplatz");
+        ids.add("Sporthalle");
+        removeGeofences(ids);
     }
 
     private PendingIntent createGeofencingPendingIntent(){

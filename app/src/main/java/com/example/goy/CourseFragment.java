@@ -5,19 +5,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.TranslateAnimation;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.cardview.widget.CardView;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,9 +32,9 @@ public class CourseFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Course course = (Course) requireArguments().getParcelable("course");
+        Course course = requireArguments().getParcelable("course");
         DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
-        List<LocalDate> dateList = dataBaseHelper.getDates(course);
+        List<LocalDate> dateList = dataBaseHelper.getDates(course, true);
         View view = inflater.inflate(R.layout.expanded_course, container, false);
         setUpView(view, course);
         CardView cardView = view.findViewById(R.id.expanded_item);
@@ -51,7 +47,7 @@ public class CourseFragment extends Fragment {
         addButton.setTransitionName("add_button");
 
         Transition sharedElementTransition = TransitionInflater.from(getContext())
-                .inflateTransition(android.R.transition.move);
+                .inflateTransition(android.R.transition.slide_bottom);
         sharedElementTransition.addTarget(addButton);
 
         getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
@@ -74,10 +70,7 @@ public class CourseFragment extends Fragment {
             datePickerDialog.show();
         });
 
-        dateAdapter.setOnItemLongClickListener(pos -> {
-            dateAdapter.deleteItem(pos, getContext());
-
-        });
+        dateAdapter.setOnItemLongClickListener(pos -> dateAdapter.deleteItem(pos, getContext()));
         return view;
     }
 

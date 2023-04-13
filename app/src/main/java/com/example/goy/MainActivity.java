@@ -16,7 +16,9 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -24,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -55,13 +58,21 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1, PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2,
             PERMISSIONS_REQUEST_NOTIFICATIONS = 3;
     private static String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION} ;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor sharedEditor;
     private static final String[] backgroundLocationPermission = {Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+    private static boolean isGeofenceActive;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getSharedPrefs();
+        if(!isGeofenceActive){
+
+        }
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -119,6 +130,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void registerGeofence(){
         geofenceHelper.registerStandardFences();
+        sharedEditor.putBoolean("geofenceActive", true);
+        sharedEditor.apply();
+    }
+
+    private void removeGeofence(){
+        geofenceHelper.removeStandardFences();
+        sharedEditor.putBoolean("geofenceActive", false);
+        sharedEditor.apply();
     }
 
     @Override
@@ -154,6 +173,45 @@ public class MainActivity extends AppCompatActivity {
             }else {
                 Toast.makeText(this, "sorry, but this app needs your location to work properly", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void getSharedPrefs(){
+        sharedPreferences = getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        sharedEditor = sharedPreferences.edit();
+        isGeofenceActive = sharedPreferences.getBoolean("geofenceActive", false);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        MenuItem geoFenceItem = menu.findItem(R.id.activate_geofence);
+        geoFenceItem.setChecked(isGeofenceActive);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        switch (id){
+            case R.id.activate_geofence:
+                boolean isChecked = !item.isChecked();
+                if(isChecked){
+                    if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                        ActivityCompat.requestPermissions(this,
+                                requiredPermissions,
+                                PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+                    }else {
+                        registerGeofence();
+                    }
+                }else {
+                    removeGeofence();
+                }
+                item.setChecked(isChecked);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 }

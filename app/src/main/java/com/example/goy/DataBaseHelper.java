@@ -242,14 +242,15 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(Course course){
+    public List<LocalDate> getDates(Course course, boolean desc){
         SQLiteDatabase db = this.getReadableDatabase();
         List<LocalDate> rtrn = new ArrayList<>();
         String[] projection = {"date"};
         String selection = "courseId = ?";
         String[] args = {course.getStringId()};
+        String orderBy = "date " + (desc ? "DESC" : "ASC");
 
-        Cursor cursor = db.query("course_date", projection, selection, args, null, null, "date DESC");
+        Cursor cursor = db.query("course_date", projection, selection, args, null, null, orderBy);
 
         while (cursor.moveToNext()){
             String dateString = cursor.getString(cursor.getColumnIndexOrThrow("date"));

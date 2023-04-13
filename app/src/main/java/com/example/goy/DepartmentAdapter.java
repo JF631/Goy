@@ -86,7 +86,7 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
         return courseList.size();
     }
 
-    public void switchDepartment(List<Pair<Course, LocalDate>> courseList){
+    public void switchList(List<Pair<Course, LocalDate>> courseList){
         this.courseList = courseList;
         notifyDataSetChanged();
     }
