@@ -2,6 +2,7 @@ package com.example.goy;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -25,6 +26,8 @@ public class IntentDatabaseService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         DataBaseHelper dataBaseHelper = new DataBaseHelper(this);
+        SharedPreferences sharedPreferences = this.getSharedPreferences("GoyPrefs", MODE_PRIVATE);
+        int minBeforeCourse = sharedPreferences.getInt("minutes_before_course", 30);
         LocalDate date = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
 
@@ -56,7 +59,7 @@ public class IntentDatabaseService extends IntentService {
         }
 
         for(Pair<LocalTime, LocalTime> time : timeList){
-            if(currentTime.isAfter(time.getFirst()) && currentTime.isBefore(time.getSecond())){
+            if(currentTime.isAfter(time.getFirst().minusMinutes(minBeforeCourse)) && currentTime.isBefore(time.getSecond())){
                 Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);
                 Log.d(TAG, "course id: "  + course.getStringId());
                 if(dataBaseHelper.getLocations(course).contains(location)){
