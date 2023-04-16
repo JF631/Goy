@@ -73,16 +73,20 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
         holder.checkedTextView.setChecked(checked);
         holder.startTime.setText(start);
         holder.endTime.setText(end);
-        holder.startTime.setOnClickListener(view -> getTime(view, holder.startTime));
-        holder.endTime.setOnClickListener(view -> getTime(view, holder.endTime));
+        holder.startTime.setOnClickListener(view -> getTime(view, holder.startTime, holder.checkedTextView));
+        holder.endTime.setOnClickListener(view -> getTime(view, holder.endTime, holder.checkedTextView));
     }
 
-    private void getTime(View view, TextView textView){
+    private void getTime(View view, TextView textView, CheckedTextView checkedTextView){
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        TimePickerDialog timePickerDialog = new TimePickerDialog(view.getContext(), (timePicker, i, i1) -> textView.setText(String.format("%02d:%02d", i, i1)), hour, minute, true);
+        TimePickerDialog timePickerDialog = new TimePickerDialog(view.getContext(), (timePicker, i, i1) -> {
+            textView.setText(String.format("%02d:%02d", i, i1));
+            checkedTextView.setChecked(false);
+        }, hour, minute, true);
+
 
         timePickerDialog.show();
 

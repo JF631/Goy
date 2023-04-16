@@ -92,7 +92,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         else endDate.setText(end.toString());
 
         dataBaseHelper = new DataBaseHelper(getContext());
-        courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+        courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
         courseDateList.sort(byDate.reversed());
         departmentAdapter = new DepartmentAdapter(courseDateList);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -109,7 +109,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                 LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
                 start.set(selectedDate.format(formatter));
                 startDate.setText(start.toString());
-                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, isDesc[0]);
             }, year, month, dayOfMonth);
 
@@ -121,7 +121,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                 LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
                 end.set(selectedDate.format(formatter));
                 endDate.setText(end.toString());
-                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, isDesc[0]);
             }, year, month, dayOfMonth);
 
@@ -169,7 +169,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String selected = adapterView.getItemAtPosition(i).toString();
-                courseDateList = dataBaseHelper.getDates(selected, Utilities.tryParse(start.get()), Utilities.tryParse(end.get()));
+                courseDateList = dataBaseHelper.getDates(selected, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, isDesc[0]);
             }
 

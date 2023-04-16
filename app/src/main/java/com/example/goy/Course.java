@@ -16,6 +16,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,7 +69,9 @@ public class Course implements Parcelable {
     @RequiresApi(api = Build.VERSION_CODES.N)
     public HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap(){
         if(courseTimes == null) return null;
-        return courseTimes.stream().collect(Collectors.toMap(Triple::getFirst,
+        return courseTimes.stream()
+                .sorted(Comparator.comparing(Triple::getFirst, Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Triple::getFirst,
                 t -> new Pair<>(t.getSecond(), t.getThird()),
                 (oldVal, newVal) -> oldVal,
                 HashMap::new

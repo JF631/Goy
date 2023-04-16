@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -80,27 +81,30 @@ public class CreateFragment extends DialogFragment {
                     .stream()
                     .map(entry -> new Triple<>(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond()))
                     .collect(Collectors.toList());
+            saveBtn.setText("Änderungen Speichern");
         }
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
         WeekdayAdapter adapter = new WeekdayAdapter(days, timeMap);
         weekdayView.setAdapter(adapter);
+
 
         adapter.setOnItemClickListener((pos, itemView) -> {
             CheckedTextView checkedTextView = itemView.findViewById(R.id.create_weekday_item);
             TextView startTextView = itemView.findViewById(R.id.create_start_item);
             TextView endTextView = itemView.findViewById(R.id.create_end_item);
             boolean isChecked = checkedTextView.isChecked();
-            if(!isChecked && startTextView.getText().toString().equals("start") ||
-                    endTextView.getText().toString().equals("end")){
+            LocalTime start = Utilities.tryParseTime(startTextView.getText().toString());
+            LocalTime end = Utilities.tryParseTime(endTextView.getText().toString());
+            if(!isChecked && start == null || end  == null){
                 return;
             }
             String day = adapter.getItem(pos).toUpperCase();
-            LocalTime start = LocalTime.parse(startTextView.getText().toString());
-            LocalTime end = LocalTime.parse(endTextView.getText().toString());
             Triple<String, LocalTime, LocalTime> time = new Triple<>(day, start, end);
-            for(Triple<String, LocalTime, LocalTime> currentlySaved : timeList){
-                if(currentlySaved.getFirst().equals(time.getFirst())) {
-                    timeList.remove(currentlySaved);
+            Iterator<Triple<String, LocalTime, LocalTime>> iterator = timeList.iterator();
+            while (iterator.hasNext()) {
+                Triple<String, LocalTime, LocalTime> currentlySaved = iterator.next();
+                if (currentlySaved.getFirst().equals(time.getFirst())) {
+                    iterator.remove();
                 }
             }
             timeList.add(time);
