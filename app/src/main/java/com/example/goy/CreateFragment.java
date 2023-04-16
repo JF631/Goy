@@ -24,22 +24,31 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CreateFragment extends DialogFragment {
     private Spinner departmentSpinner;
     private EditText etGroup;
     private CheckBox cbHall, cbTrack;
     private static final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
-    private final ArrayList<String> locations = new ArrayList<>();
+    private Set<String> locations = new HashSet<>();
     private List<Triple<String, LocalTime, LocalTime>> timeList = new ArrayList<>();
+    private final Course course;
     private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
 
 
     private OnCreateCourseClickedListener onCreateCourseClickedListener;
 
     public interface OnCreateCourseClickedListener{
-        void onCreateCourseClicked(List<Triple<String,LocalTime, LocalTime>> times, String department, String group, ArrayList<String> locations);
+        void onCreateCourseClicked(List<Triple<String,LocalTime, LocalTime>> times, String department, String group, Set<String> locations);
+    }
+
+    public CreateFragment(@Nullable Course course){
+        this.course = course;
     }
 
 
@@ -58,9 +67,22 @@ public class CreateFragment extends DialogFragment {
         etGroup = view.findViewById(R.id.create_et_group);
         cbHall = view.findViewById(R.id.create_checkbox_halle);
         cbTrack = view.findViewById(R.id.create_checkbox_sportplatz);
+        locations = Course.getLocations(course);
+        departmentSpinner.setSelection(spinnerAdapter.getPosition(Course.getDepartment(course)));
+        etGroup.setText(Course.getGroup(course));
+        cbHall.setChecked(locations != null && locations.contains(cbHall.getText()));
+        cbTrack.setChecked(locations != null && locations.contains(cbTrack.getText()));
 
+
+        HashMap<String, Pair<LocalTime, LocalTime>> timeMap = Course.getCourseTimesMap(course);
+        if(timeMap != null){
+            timeList = timeMap.entrySet()
+                    .stream()
+                    .map(entry -> new Triple<>(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond()))
+                    .collect(Collectors.toList());
+        }
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        WeekdayAdapter adapter = new WeekdayAdapter(days);
+        WeekdayAdapter adapter = new WeekdayAdapter(days, timeMap);
         weekdayView.setAdapter(adapter);
 
         adapter.setOnItemClickListener((pos, itemView) -> {
@@ -96,7 +118,7 @@ public class CreateFragment extends DialogFragment {
         });
 
         saveBtn.setOnClickListener(view1 -> {
-            if(timeList.size() <= 0){
+            if(timeList.size() == 0){
                 Toast.makeText(getActivity(), "Select at least one day", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -114,7 +136,7 @@ public class CreateFragment extends DialogFragment {
                 }
             }
 
-            if (locations.size() <= 0){
+            if (locations.size() == 0){
                 Toast.makeText(getActivity(), "please select at least one location", Toast.LENGTH_SHORT).show();
                 return;
             }

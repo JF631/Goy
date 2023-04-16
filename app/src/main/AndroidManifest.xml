@@ -23,8 +23,6 @@
         android:theme="@style/Theme.Goy"
         tools:targetApi="31">
 
-        <service android:name=".IntentDatabaseService" />
-
         <receiver android:name=".BootCompletedReceiver"
             android:exported="true">
             <intent-filter>

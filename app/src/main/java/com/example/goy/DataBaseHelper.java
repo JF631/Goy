@@ -20,7 +20,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class DataBaseHelper extends SQLiteOpenHelper {
@@ -318,7 +320,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     public long insertCourse(Course course){
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        String duration;
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues basicInfo = new ContentValues();
         basicInfo.put("department_name", course.getDepartment());
@@ -331,7 +332,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             long durationMins = Duration.between(time.getSecond(), time.getThird()).toMinutes();
             Log.d("DBHelper", Long.toString(durationMins));
             double durationHours = durationMins / 60.0;
-            duration = decimalFormat.format(durationHours);
+            String duration = decimalFormat.format(durationHours);
             timeInfo.put("weekday", time.getFirst());
             timeInfo.put("startTime", time.getSecond().format(timeFormatter));
             timeInfo.put("endTime", time.getThird().format(timeFormatter));
@@ -340,7 +341,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             db.insert("course_times", null, timeInfo);
         }
 
-        List<String> locations = course.getLocations();
+        Set<String> locations = course.getLocations();
         for (String loc : locations){
             ContentValues locInfo = new ContentValues();
             locInfo.put("location", loc);
@@ -350,6 +351,49 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
         db.close();
         return rtrn;
+    }
+
+    public void updateBasicGroupInfo(Course course, String identifier, String newValue){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(identifier, newValue);
+        String where = "id = ?";
+        String[] args = {course.getStringId()};
+        db.update("courses", contentValues, where, args);
+        db.close();
+    }
+
+    public void updateCourseTimes(Course course, List<Triple<String, LocalTime, LocalTime>> newTimes){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = "courseId = ?";
+        String[] args = {course.getStringId()};
+        db.delete("course_times", selection, args);
+        db.close();
+
+        insertCourseTimes(course, newTimes);
+    }
+
+    private void insertCourseTimes(Course course, List<Triple<String, LocalTime, LocalTime>> newTimes){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = "courseId = ?";
+        String[] args = {course.getStringId()};
+
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        for(Triple<String, LocalTime, LocalTime> time : newTimes){
+            ContentValues timeInfo = new ContentValues();
+            long durationMins = Duration.between(time.getSecond(), time.getThird()).toMinutes();
+            Log.d("DBHelper", Long.toString(durationMins));
+            double durationHours = durationMins / 60.0;
+            String duration = decimalFormat.format(durationHours);
+            timeInfo.put("weekday", time.getFirst());
+            timeInfo.put("startTime", time.getSecond().format(timeFormatter));
+            timeInfo.put("endTime", time.getThird().format(timeFormatter));
+            timeInfo.put("duration", duration);
+            timeInfo.put("courseId", args[0]);
+            db.insert("course_times", null, timeInfo);
+        }
     }
 
     private Pair<String, String> getBasicInformation(long id){
@@ -414,7 +458,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return rtrn;
     }
 
-    public void insertLocations(@NonNull Course course, @NonNull ArrayList<String> locations){
+    public void insertLocations(@NonNull Course course, @NonNull Set<String> locations){
         SQLiteDatabase db = this.getWritableDatabase();
         String id = course.getStringId();
 
@@ -453,7 +497,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
         for(Course course : courses){
             String[] args = {course.getStringId()};
-            List<String> locations = new ArrayList<>();
+            Set<String> locations = new HashSet<>();
             Cursor cursor = db.query("course_locations", projection, selection, args, null, null, null);
 
             while (cursor.moveToNext()){
@@ -463,6 +507,16 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             course.setLocations(locations);
         }
         db.close();
+    }
+
+    public void updateLocations(Course course, Set<String> locations){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = "courseId = ?";
+        String[] args = {course.getStringId()};
+        db.delete("course_locations", selection, args);
+        db.close();
+
+        insertLocations(course, locations);
     }
 
     public boolean deleteCourse(@NonNull Course course){

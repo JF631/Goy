@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import java.nio.channels.ClosedChannelException;
@@ -15,22 +16,27 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Course implements Parcelable {
-    private final String department, group;
+    private String department;
+    private String group;
     private long courseId = -1;
     private List<Triple<String, LocalTime, LocalTime>> courseTimes;
-    private List<String> locations;
-    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, List<String> locations){
+    private Set<String> locations;
+    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, Set<String> locations){
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
         this.locations = locations;
     }
 
-    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, int id, List<String> locations){
+    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, int id, Set<String> locations){
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
@@ -51,6 +57,29 @@ public class Course implements Parcelable {
         return courseTimes;
     }
 
+    public static String getDepartment(@Nullable Course course){
+        return course != null ? course.getDepartment() : null;
+    }
+
+    public static String getGroup(@Nullable Course course){
+        return course != null ? course.getGroup() : null;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap(){
+        if(courseTimes == null) return null;
+        return courseTimes.stream().collect(Collectors.toMap(Triple::getFirst,
+                t -> new Pair<>(t.getSecond(), t.getThird()),
+                (oldVal, newVal) -> oldVal,
+                HashMap::new
+        ));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public static HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap(Course course){
+        return course != null ? course.getCourseTimesMap() : null;
+    }
+
     public String getDaysFlattened(){
         List<String> days = new ArrayList<>();
         for(Triple<String, LocalTime, LocalTime> courseTime : courseTimes){
@@ -59,9 +88,12 @@ public class Course implements Parcelable {
         return TextUtils.join(",", days);
     }
 
-    public List<String> getLocations(){
-        if(locations == null) return null;
-        return locations;
+    public Set<String> getLocations(){
+        return locations != null ? locations : null;
+    }
+
+    public static Set<String> getLocations(@Nullable Course course){
+        return course != null ? course.getLocations() : new HashSet<>();
     }
 
     public String getLocationsFlattened(){
@@ -70,8 +102,27 @@ public class Course implements Parcelable {
         return String.join(",", locations);
     }
 
-    public void setLocations(List<String> locations){
+    public void setLocations(Set<String> locations){
         this.locations = locations;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void setCourseTimes(HashMap<String, Pair<LocalTime, LocalTime>> times){
+        courseTimes = times.entrySet()
+                .stream()
+                .map(entry -> new Triple<>(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond()))
+                .collect(Collectors.toList());
+    }
+    public void setCourseTimes(List<Triple<String, LocalTime, LocalTime>> times){
+        courseTimes = times;
+    }
+
+    public void setDepartment(String department){
+        this.department = department;
+    }
+
+    public void setGroup(String group){
+        this.group = group;
     }
 
     public long getId(){return courseId;}
@@ -109,7 +160,7 @@ public class Course implements Parcelable {
         parcel.writeString(department);
         parcel.writeString(group);
         parcel.writeLong(courseId);
-        parcel.writeStringList(locations);
+        parcel.writeStringList(new ArrayList<>(locations));
         parcel.writeStringList(days);
         parcel.writeStringList(start);
         parcel.writeStringList(end);
@@ -122,7 +173,7 @@ public class Course implements Parcelable {
         department = in.readString();
         group = in.readString();
         courseId = in.readLong();
-        locations = in.createStringArrayList();
+        locations = new HashSet<>(in.createStringArrayList());
         days = in.createStringArrayList();
         start = in.createStringArrayList();
         end = in.createStringArrayList();

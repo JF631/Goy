@@ -1,6 +1,7 @@
 package com.example.goy;
 
 import android.app.TimePickerDialog;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +10,23 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHolder> {
 
     private final List<String> weekdays;
+    private final HashMap<String, Pair<LocalTime, LocalTime>> timeList;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
     public interface OnItemClickListener{
         void onItemClick(int position, View itemView);
@@ -28,8 +38,10 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
         this.onItemClickListener = listener;
     }
 
-    public WeekdayAdapter(List<String> weekdays){
+    public WeekdayAdapter(@NonNull List<String> weekdays,
+                          @Nullable HashMap<String, Pair<LocalTime, LocalTime>> timeList){
         this.weekdays = weekdays;
+        this.timeList = timeList;
     }
 
 
@@ -49,7 +61,18 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull WeekdayAdapter.ViewHolder holder, int position) {
+        String weekday = weekdays.get(position);
+        String start = "start", end = "end";
+        boolean checked = false;
+        if(timeList != null && timeList.containsKey(weekday.toUpperCase())){
+            checked = true;
+            start = Objects.requireNonNull(timeList.get(weekday.toUpperCase())).getFirst().format(formatter);
+            end = Objects.requireNonNull(timeList.get(weekday.toUpperCase())).getSecond().format(formatter);
+        }
         holder.checkedTextView.setText(weekdays.get(position));
+        holder.checkedTextView.setChecked(checked);
+        holder.startTime.setText(start);
+        holder.endTime.setText(end);
         holder.startTime.setOnClickListener(view -> getTime(view, holder.startTime));
         holder.endTime.setOnClickListener(view -> getTime(view, holder.endTime));
     }

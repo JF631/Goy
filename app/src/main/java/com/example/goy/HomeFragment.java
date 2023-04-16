@@ -25,6 +25,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class HomeFragment extends Fragment implements CreateFragment.OnCreateCourseClickedListener {
     private CourseAdapter courseAdapter;
@@ -87,14 +88,14 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void showCreate(){
-        CreateFragment createFragment = new CreateFragment();
+        CreateFragment createFragment = new CreateFragment(null);
         createFragment.show(getChildFragmentManager(), "create_course");
         createFragment.setOnCreateCourseClickedListener(this);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void onCreateCourseClicked(List<Triple<String, LocalTime, LocalTime>> times, String department, String group, ArrayList<String> locations) {
+    public void onCreateCourseClicked(List<Triple<String, LocalTime, LocalTime>> times, String department, String group, Set<String> locations) {
         Course course = new Course(department, group, times, locations);
         DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
         long id = dataBaseHelper.insertCourse(course);
