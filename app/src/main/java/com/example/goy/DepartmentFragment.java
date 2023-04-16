@@ -26,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -203,6 +204,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         try {
             File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
             String downloadDir = downloadDirs[0].getAbsolutePath();
+
             File pdfFile = new File(downloadDir, docName);
             if(pdfFile.exists()){
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
@@ -257,7 +259,8 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                 }
             }
             pdfDoc.close();
-            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Data exported successfully", Snackbar.LENGTH_SHORT)
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Stundenzettel erstellt", Snackbar.LENGTH_LONG)
+                    .setAction("Anzeigen", view -> showPdf(pdfFile))
                     .show();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -297,12 +300,25 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         departmentAdapter.switchList(values);
     }
 
-    private void sharePdf(File file, Context context){
+    private void sharePdf(File file){
         if(file.exists()){
+            Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() +".provider", file);
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("application/pdf");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            context.startActivity(Intent.createChooser(shareIntent, "Zettel senden"));
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            requireContext().startActivity(Intent.createChooser(shareIntent, "Zettel senden"));
+        }
+    }
+
+    private void showPdf(File file){
+        if(file.exists()){
+            Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() +".provider", file);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+
         }
     }
 
