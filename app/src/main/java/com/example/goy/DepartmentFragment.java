@@ -32,6 +32,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.io.font.FontConstants;
@@ -60,6 +61,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
     private DepartmentAdapter departmentAdapter;
+    private View view;
     private Comparator<Pair<Course, LocalDate>> byDate;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
@@ -70,7 +72,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.department_date_view, container, false);
+        view = inflater.inflate(R.layout.department_date_view, container, false);
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
@@ -149,7 +151,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         documentPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) {
                 Log.d("DP", uri.getPath());
-                export(uri, courseDateList, department);
+                export(uri, courseDateList, department);;
                 // Handle the selected file URI here
                 // ...
             }
@@ -255,10 +257,13 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                 }
             }
             pdfDoc.close();
-
+            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Data exported successfully", Snackbar.LENGTH_SHORT)
+                    .show();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+
     }
 
     private void showCreate(){
@@ -290,6 +295,15 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         if(desc) values.sort(byDate.reversed());
         else values.sort(byDate);
         departmentAdapter.switchList(values);
+    }
+
+    private void sharePdf(File file, Context context){
+        if(file.exists()){
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("application/pdf");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+            context.startActivity(Intent.createChooser(shareIntent, "Zettel senden"));
+        }
     }
 
     @Override
