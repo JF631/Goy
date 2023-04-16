@@ -9,8 +9,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,22 +16,21 @@ import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class HomeFragment extends Fragment implements CreateFragment.OnCreateCourseClickedListener {
     private CourseAdapter courseAdapter;
-    private DataBaseHelper dataBaseHelper;
 
     public HomeFragment(){}
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -45,13 +42,17 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
                 .inflateTransition(android.R.transition.slide_bottom);
         sharedElementTransition.addTarget(addButton);
 
-        getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
+        requireActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
 
-        dataBaseHelper = new DataBaseHelper(getContext());
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
         List<Course> courseList = dataBaseHelper.getCourses();
         courseAdapter = new CourseAdapter(courseList);
         homeView.setLayoutManager(new LinearLayoutManager(getContext()));
         homeView.setAdapter(courseAdapter);
+
+        SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(courseAdapter, requireContext());
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
+        itemTouchHelper.attachToRecyclerView(homeView);
 
         courseAdapter.setOnItemClickListener((position, sharedView) -> {
             CourseFragment courseFragment = new CourseFragment();

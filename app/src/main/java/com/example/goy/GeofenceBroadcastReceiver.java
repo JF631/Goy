@@ -17,6 +17,7 @@ import com.google.android.gms.location.GeofencingEvent;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "GeofenceBroadcastReceiver";
@@ -27,6 +28,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         NotificationHelper notificationHelper = new NotificationHelper(context);
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
+        assert geofencingEvent != null;
         if (geofencingEvent.hasError()){
             int errorCode = geofencingEvent.getErrorCode();
             Log.e(TAG, "Geofencing error: " + errorCode);
@@ -36,7 +38,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         Log.d(TAG, String.valueOf(transitionType));
         if (transitionType == Geofence.GEOFENCE_TRANSITION_DWELL){
             List<Geofence> triggeredFences = geofencingEvent.getTriggeringGeofences();
-            if (triggeredFences.size() > 1) return;
+            if (Objects.requireNonNull(triggeredFences).size() > 1) return;
             Log.d(TAG, "geofence entered: " + geofencingEvent.getTriggeringGeofences());
             if(!notificationHelper.createNotification("Geofence entered", "finally!")){Log.d(TAG, "no notification permission given");}
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DatabaseWorker.class)
@@ -49,7 +51,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         SharedPreferences sharedPreferences = context.getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER){
             Log.d(TAG, "entered");
-            Pair<String, LocalTime> enteredFence = new Pair<>(geofencingEvent.getTriggeringGeofences().get(0).getRequestId(),
+            Pair<String, LocalTime> enteredFence = new Pair<>(Objects.requireNonNull(geofencingEvent.getTriggeringGeofences()).get(0).getRequestId(),
                     LocalTime.now());
             SharedPreferences.Editor sEditor = sharedPreferences.edit();
             sEditor.putString("enteredFence", enteredFence.toString());
@@ -61,7 +63,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             if(enteringTime.isEmpty()) return;
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DatabaseWorker.class)
                     .setInputData(new Data.Builder()
-                            .putString("location", geofencingEvent.getTriggeringGeofences().get(0).getRequestId())
+                            .putString("location", Objects.requireNonNull(geofencingEvent.getTriggeringGeofences()).get(0).getRequestId())
                             .putString("left", enteringTime)
                             .build())
                     .build();

@@ -110,14 +110,12 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
                     dialogInterface.dismiss();
 
                 })
-                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                });
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public static class ViewHolder extends RecyclerView.ViewHolder{
         TextView dateView, durationView, courseView;
         Context ctx;
         public ViewHolder(@NonNull View itemView) {

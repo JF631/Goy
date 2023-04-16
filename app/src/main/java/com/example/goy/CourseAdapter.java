@@ -84,9 +84,9 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
 
         Course course = courseList.get(pos);
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
-                .setTitle("Kurs löschen")
-                .setMessage("Möchten Sie den Kurs " + course.getGroup() + " entgültig Löschen?\n" +
-                        "ACHTUNG: Es werden alle zugehörigen Termine gelöscht!")
+                .setTitle("Kurs löschen?")
+                .setMessage("Möchten Sie den Kurs " + course.getGroup() + " endgültig lsöschen?\n" +
+                        "ACHTUNG: Es werden auch alle zugehörigen Termine gelöscht!")
                 .setCancelable(false)
                 .setPositiveButton("Löschen", (dialogInterface, i) -> {
                     if(dataBaseHelper.deleteCourse(courseList.get(pos))){
@@ -98,6 +98,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
                 })
                 .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
                     dialogInterface.dismiss();
+                    notifyItemChanged(pos);
                 });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();

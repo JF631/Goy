@@ -1,6 +1,5 @@
 package com.example.goy;
 
-import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,7 +42,6 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -51,14 +50,12 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class DepartmentFragment extends Fragment implements CreatePersonFragment.OnPersonCreateClickedListener{
-
-    private static final String REQ_PERMISSIONS = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-
     private ActivityResultLauncher<String[]> documentPickerLauncher;
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
@@ -129,23 +126,23 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         });
 
         Drawable descDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_arrow_down, null);
+        assert descDrawable != null;
         descDrawable.setBounds(0, 0, descDrawable.getIntrinsicWidth(), descDrawable.getIntrinsicHeight());
         sortType.setCompoundDrawables(null, null, descDrawable, null);
         sortType.invalidate();
 
         Drawable ascDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_arrow_up, null);
+        assert ascDrawable != null;
         ascDrawable.setBounds(0, 0, ascDrawable.getIntrinsicWidth(), ascDrawable.getIntrinsicHeight());
         sortType.setOnClickListener(view1 -> {
             isDesc[0] = !isDesc[0];
             if (isDesc[0]) {
                 sortType.setCompoundDrawables(null, null, descDrawable, null);
-                sortType.invalidate();
-                updateList(courseDateList, isDesc[0]);
             } else {
                 sortType.setCompoundDrawables(null, null, ascDrawable, null);
-                sortType.invalidate();
-                updateList(courseDateList, isDesc[0]);
             }
+            sortType.invalidate();
+            updateList(courseDateList, isDesc[0]);
 
         });
 
@@ -161,7 +158,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         floatingActionButton.setOnClickListener(view1 -> {
             SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
             if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
-            else requestPermissions();
+            else selectDocument();
 
         });
 
@@ -179,9 +176,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
             }
         });
 
-        departmentAdapter.setOnItemLongClickListener(pos -> {
-            departmentAdapter.deleteItem(pos, getContext());
-        });
+        departmentAdapter.setOnItemLongClickListener(pos -> departmentAdapter.deleteItem(pos, getContext()));
 
         return view;
     }
@@ -189,22 +184,41 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList, String department) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyMMdd");
         int sumDuration = 0;
         for(Pair<Course, LocalDate> cl : courseLocalDateList){
             sumDuration += Integer.parseInt(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
         }
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        String name = sharedPreferences.getString("name", "");
+        String surname = sharedPreferences.getString("surname", "");
+        String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department + ".pdf";
         int size = courseLocalDateList.size();
         if (size >= 43) {
             Toast.makeText(getContext(), "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            File[] downloadDirs = getContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
+            File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
             String downloadDir = downloadDirs[0].getAbsolutePath();
-            File pdfFile = new File(downloadDir, "test.pdf");
+            File pdfFile = new File(downloadDir, docName);
+            if(pdfFile.exists()){
+                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
+                        .setTitle("Datei existiert bereits")
+                        .setMessage("Möchten Sie die Datei überschreiben?")
+                        .setCancelable(false)
+                        .setPositiveButton("löschen", (dialogInterface, i) -> {
+                            dialogInterface.dismiss();
+                        })
+                        .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                            dialogInterface.dismiss();
+                            return;
+                        });
+                AlertDialog dialog = alertBuilder.create();
+                dialog.show();
+            }
             Log.d("PATH:", downloadDir);
-            InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
+            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
             PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
             Map<String, PdfFormField> fields = form.getFormFields();
@@ -217,17 +231,17 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                 field.setFontSize(10f); // Set the font size to 12
             }
 
-            fields.get("date").setValue(LocalDate.now().format(formatter));
-            fields.get("prename").setValue(sharedPreferences.getString("name",""));
-            fields.get("name").setValue(sharedPreferences.getString("surname", ""));
-            fields.get("iban").setValue(sharedPreferences.getString("iban", ""));
-            fields.get("bic").setValue(sharedPreferences.getString("bic", ""));
-            fields.get("bank").setValue(sharedPreferences.getString("bank", ""));
-            fields.get("department").setValue(department);
-            fields.get("sum").setValue(String.valueOf(sumDuration));
+            Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(formatter));
+            Objects.requireNonNull(fields.get("prename")).setValue(sharedPreferences.getString("name",""));
+            Objects.requireNonNull(fields.get("name")).setValue(sharedPreferences.getString("surname", ""));
+            Objects.requireNonNull(fields.get("iban")).setValue(sharedPreferences.getString("iban", ""));
+            Objects.requireNonNull(fields.get("bic")).setValue(sharedPreferences.getString("bic", ""));
+            Objects.requireNonNull(fields.get("bank")).setValue(sharedPreferences.getString("bank", ""));
+            Objects.requireNonNull(fields.get("department")).setValue(department);
+            Objects.requireNonNull(fields.get("sum")).setValue(String.valueOf(sumDuration));
 
             int d = 0;
-            String dateKey = "", durationKey = "";
+            String dateKey, durationKey;
             for (int i = 0; i < size; ++i) {
                 if (i % 22 == 0 && i != 0) d = 1;
                 dateKey = "dt1." + (i % 22) + "." + d;
@@ -236,14 +250,12 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
                     Log.d("TEST", "save");
                     LocalDate localDate = courseLocalDateList.get(i).getSecond();
                     String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
-                    fields.get(dateKey).setValue(localDate.format(formatter));
-                    fields.get(durationKey).setValue(duration);
+                    Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(formatter));
+                    Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
                 }
             }
             pdfDoc.close();
 
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -256,7 +268,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void requestPermissions(){
+    private void selectDocument(){
 
         String mimeType = "application/pdf";
 
@@ -267,7 +279,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         // Add the allowed directories as additional locations for the document chooser
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, getActivity().getExternalFilesDir(null));
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, requireActivity().getExternalFilesDir(null));
 
 
         // Start the document chooser activity
@@ -290,6 +302,6 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         if(bic != null) editor.putString("bic", bic);
         if(bank != null) editor.putString("bank", bank);
         editor.apply();
-        requestPermissions();
+        selectDocument();
     }
 }

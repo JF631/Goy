@@ -1,7 +1,6 @@
 package com.example.goy;
 
 import android.Manifest;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -13,8 +12,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 public class NotificationHelper {
-    private Context context;
-    private NotificationManager mNotificationManager;
+    private final Context context;
+
     public NotificationHelper(Context context) {
         this.context = context;
     }
@@ -29,7 +28,7 @@ public class NotificationHelper {
                 .setContentTitle(title)
                 .setContentText(message);
 
-        mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             int importance = NotificationManager.IMPORTANCE_HIGH;

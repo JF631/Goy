@@ -3,7 +3,6 @@ package com.example.goy;
 
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -105,9 +104,7 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
                     dialogInterface.dismiss();
 
                 })
-                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                });
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
     }
@@ -122,7 +119,7 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
 
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public static class ViewHolder extends RecyclerView.ViewHolder{
         TextView dateView, durationView;
         Context ctx;
         public ViewHolder(@NonNull View itemView) {

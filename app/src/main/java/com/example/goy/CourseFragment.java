@@ -14,7 +14,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,7 +39,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         course = requireArguments().getParcelable("course");
-        DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(requireContext());
         List<LocalDate> dateList = dataBaseHelper.getDates(course, true);
         View view = inflater.inflate(R.layout.expanded_course, container, false);
         setUpView(view, course);
@@ -57,10 +56,9 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
                 .inflateTransition(android.R.transition.slide_bottom);
         sharedElementTransition.addTarget(addButton);
 
-        getActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
+        requireActivity().getWindow().setSharedElementEnterTransition(sharedElementTransition);
 
-        FloatingActionButton fabDate = view.findViewById(R.id.add_date);
-        fabDate.setOnClickListener(view1 -> {
+        addButton.setOnClickListener(view1 -> {
             List<String> courseDays = dataBaseHelper.getWeekDays(course);
             Calendar calendar = Calendar.getInstance();
             int year = calendar.get(Calendar.YEAR);
@@ -80,9 +78,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         dateAdapter.setOnItemLongClickListener(pos -> dateAdapter.deleteItem(pos, getContext()));
 
 
-        imageView.setOnClickListener(view1 -> {
-            showCreate();
-        });
+        imageView.setOnClickListener(view1 -> showCreate());
         return view;
     }
 
@@ -139,7 +135,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         listTitleView.setText(listViewTitle);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onDestroy() {
         super.onDestroy();

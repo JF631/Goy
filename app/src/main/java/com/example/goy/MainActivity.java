@@ -9,61 +9,33 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.animation.ObjectAnimator;
-import android.app.PendingIntent;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Toast;
 
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingClient;
-import com.google.android.gms.location.GeofencingRequest;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.navigation.NavigationBarView;
 
-import java.io.Serializable;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
-@RequiresApi(api = Build.VERSION_CODES.O)
+@RequiresApi(api = Build.VERSION_CODES.Q)
 public class MainActivity extends AppCompatActivity {
 
     private GeofenceHelper geofenceHelper;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1, PERMISSIONS_REQUEST_ACCESS_BACKGROUND_LOCATION = 2,
             PERMISSIONS_REQUEST_NOTIFICATIONS = 3;
     private static String[] requiredPermissions = {Manifest.permission.ACCESS_FINE_LOCATION} ;
-    private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor sharedEditor;
     private static final String[] backgroundLocationPermission = {Manifest.permission.ACCESS_BACKGROUND_LOCATION};
     private static boolean isGeofenceActive;
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
 
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, selectedFragment).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, Objects.requireNonNull(selectedFragment)).commit();
             return true;
         });
     }
@@ -183,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getSharedPrefs(){
-        sharedPreferences = getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         sharedEditor = sharedPreferences.edit();
         isGeofenceActive = sharedPreferences.getBoolean("geofenceActive", false);
     }

@@ -48,6 +48,7 @@ public class DatabaseWorker extends Worker {
             LocalTime enteredAt = LocalTime.parse(fenceTime[1]);
             if(Duration.between(enteredAt, currentTime).toMinutes() < 30) return Result.success();
             for(Pair<LocalTime, LocalTime> time : timeList) {
+                assert location != null;
                 if (location.equals(fenceTime[0])) {
                     if(currentTime.isAfter(time.getSecond())){
                         Course course = dataBaseHelper.getCourse(date.getDayOfWeek(), time);

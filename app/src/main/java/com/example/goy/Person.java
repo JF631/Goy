@@ -3,9 +3,6 @@ package com.example.goy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class Person {
     private final String name, surname, iban, bic, bank;
 

@@ -375,7 +375,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
     private void insertCourseTimes(Course course, List<Triple<String, LocalTime, LocalTime>> newTimes){
         SQLiteDatabase db = this.getWritableDatabase();
-        String selection = "courseId = ?";
         String[] args = {course.getStringId()};
 
         DecimalFormat decimalFormat = new DecimalFormat("#.##");

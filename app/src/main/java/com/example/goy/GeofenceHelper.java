@@ -15,6 +15,7 @@ import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GeofenceHelper {
     private static final String TAG = "GeofenceHelper";
@@ -58,7 +59,8 @@ public class GeofenceHelper {
     }
 
     public boolean checkExistance(String fenceId, Intent intent){
-        List<Geofence> triggeringFences = GeofencingEvent.fromIntent(intent).getTriggeringGeofences();
+        List<Geofence> triggeringFences = Objects.requireNonNull(GeofencingEvent.fromIntent(intent)).getTriggeringGeofences();
+        assert triggeringFences != null;
         for(Geofence fence : triggeringFences){
             if(fence.getRequestId().equals(fenceId)) return true;
         }

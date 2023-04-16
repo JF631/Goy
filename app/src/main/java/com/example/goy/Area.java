@@ -1,12 +1,10 @@
 package com.example.goy;
 
-import androidx.annotation.NonNull;
-
 public class Area {
-    private double latitude;
-    private double longitude;
-    private float radius;
-    private String name;
+    private final double latitude;
+    private final double longitude;
+    private final float radius;
+    private final String name;
 
     public Area(double latitude, double longitude, float radius, String name){
         this.latitude = latitude;

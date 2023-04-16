@@ -1,7 +1,5 @@
 package com.example.goy;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +33,7 @@ public class CreatePersonFragment extends DialogFragment {
         Button btnSave = view.findViewById(R.id.create_save);
         Button btnCancel = view.findViewById(R.id.create_cancel);
 
-        btnCancel.setOnClickListener(view1 -> {
-            dismiss();
-        });
+        btnCancel.setOnClickListener(view1 -> dismiss());
 
         btnSave.setOnClickListener(view1 -> {
             if(validateInput()){
@@ -61,11 +57,7 @@ public class CreatePersonFragment extends DialogFragment {
         if(ibanEdit.getText().length() != 22)
             return false;
 
-        if(!bicEdit.getText().toString().isEmpty() && (bicEdit.getText().length() != 8 && bicEdit.getText().length() != 11)){
-            return false;
-        }
-
-        return true;
+        return bicEdit.getText().toString().isEmpty() || (bicEdit.getText().length() == 8 || bicEdit.getText().length() == 11);
     }
 
     public void setOnPersonCreateClickedListener(OnPersonCreateClickedListener onPersonCreateClickedListener){

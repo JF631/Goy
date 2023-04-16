@@ -12,7 +12,6 @@ import androidx.annotation.RequiresApi;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
