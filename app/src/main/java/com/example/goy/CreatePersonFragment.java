@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -51,13 +52,22 @@ public class CreatePersonFragment extends DialogFragment {
     }
 
     private boolean validateInput(){
-        if(nameEdit.getText().toString().isEmpty() || surnameEdit.getText().toString().isEmpty())
+        if(nameEdit.getText().toString().isEmpty() || surnameEdit.getText().toString().isEmpty()) {
+            Toast.makeText(requireContext(), "Vor- und Nachnamen eintragen", Toast.LENGTH_SHORT).show();
             return false;
+        }
 
-        if(ibanEdit.getText().length() != 22)
+        if(ibanEdit.getText().length() != 22) {
+            Toast.makeText(requireContext(), "IBAN überprüfen", Toast.LENGTH_SHORT).show();
             return false;
+        }
 
-        return bicEdit.getText().toString().isEmpty() || (bicEdit.getText().length() == 8 || bicEdit.getText().length() == 11);
+        if(!bicEdit.getText().toString().isEmpty() && bicEdit.getText().length() != 8 && bicEdit.getText().length() != 11){
+            Toast.makeText(requireContext(), "BIC überprüfen (kann auch leer sein)", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
     }
 
     public void setOnPersonCreateClickedListener(OnPersonCreateClickedListener onPersonCreateClickedListener){
