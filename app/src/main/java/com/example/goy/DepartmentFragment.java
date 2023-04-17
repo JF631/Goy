@@ -190,9 +190,9 @@ public class DepartmentFragment extends Fragment{
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList, String department) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyMMdd");
-        int sumDuration = 0;
+        double sumDuration = 0;
         for(Pair<Course, LocalDate> cl : courseLocalDateList){
-            sumDuration += Integer.parseInt(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
+            sumDuration += Double.parseDouble(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
         }
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         String name = sharedPreferences.getString("name", "");
@@ -208,8 +208,9 @@ public class DepartmentFragment extends Fragment{
 
         File pdfFile = new File(downloadDir, docName);
         AtomicBoolean overwrite = new AtomicBoolean(true);
+
         if(pdfFile.exists()){
-            int finalSumDuration = sumDuration;
+            double finalSumDuration = sumDuration;
             AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
                     .setTitle("Datei existiert bereits")
                     .setMessage("Möchten Sie die Datei überschreiben?")
@@ -228,6 +229,12 @@ public class DepartmentFragment extends Fragment{
                     });
             AlertDialog dialog = alertBuilder.create();
             dialog.show();
+        }else {
+            try {
+                writeToPdf(pdfFile, uri, courseLocalDateList, sumDuration, size);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 
@@ -237,7 +244,7 @@ public class DepartmentFragment extends Fragment{
         createPersonFragment.show(getChildFragmentManager(), "create_person");
     }
 
-    private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, int sumDuration, int size) throws IOException {
+    private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, double sumDuration, int size) throws IOException {
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
