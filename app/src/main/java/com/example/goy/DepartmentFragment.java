@@ -195,8 +195,8 @@ public class DepartmentFragment extends Fragment{
             sumDuration += Double.parseDouble(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
         }
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-        String name = sharedPreferences.getString("name", "");
-        String surname = sharedPreferences.getString("surname", "");
+        String name = decryptString(sharedPreferences.getString("name", ""));
+        String surname = decryptString(sharedPreferences.getString("surname", ""));
         String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department + ".pdf";
         int size = courseLocalDateList.size();
         if (size >= 43) {
@@ -259,12 +259,18 @@ public class DepartmentFragment extends Fragment{
             field.setFontSize(10f); // Set the font size to 12
         }
 
+        String name = sharedPreferences.getString("name","").isEmpty() ? "" : decryptString(sharedPreferences.getString("name",""));
+        String surname = sharedPreferences.getString("surname", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("surname", ""));
+        String iban = sharedPreferences.getString("iban", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("iban", ""));
+        String bic = sharedPreferences.getString("bic", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bic", ""));
+        String bank = sharedPreferences.getString("bank", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bank", ""));
+
         Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(formatter));
-        Objects.requireNonNull(fields.get("prename")).setValue(sharedPreferences.getString("name",""));
-        Objects.requireNonNull(fields.get("name")).setValue(sharedPreferences.getString("surname", ""));
-        Objects.requireNonNull(fields.get("iban")).setValue(sharedPreferences.getString("iban", ""));
-        Objects.requireNonNull(fields.get("bic")).setValue(sharedPreferences.getString("bic", ""));
-        Objects.requireNonNull(fields.get("bank")).setValue(sharedPreferences.getString("bank", ""));
+        Objects.requireNonNull(fields.get("prename")).setValue(name);
+        Objects.requireNonNull(fields.get("name")).setValue(surname);
+        Objects.requireNonNull(fields.get("iban")).setValue(iban);
+        Objects.requireNonNull(fields.get("bic")).setValue(bic);
+        Objects.requireNonNull(fields.get("bank")).setValue(bank);
         Objects.requireNonNull(fields.get("department")).setValue(department);
         Objects.requireNonNull(fields.get("sum")).setValue(String.valueOf(sumDuration));
 
@@ -332,6 +338,16 @@ public class DepartmentFragment extends Fragment{
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(intent);
 
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String decryptString(String toDecrypt){
+        try {
+            return Utilities.decryptToString(toDecrypt);
+        } catch (Exception e) {
+            Log.e("Create Person", String.valueOf(e));
+            return "";
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,11 +38,11 @@ public class CreatePersonFragment extends DialogFragment {
         Button btnCancel = view.findViewById(R.id.create_cancel);
 
         Person currentData = getCurrentData();
-        nameEdit.setText(currentData.getName());
-        surnameEdit.setText(currentData.getSurname());
-        ibanEdit.setText(currentData.getIban());
-        bicEdit.setText(currentData.getBic());
-        bankEdit.setText(currentData.getBank());
+        if(!currentData.getName().isEmpty())nameEdit.setText(decryptString(currentData.getName()));
+        if(!currentData.getSurname().isEmpty())surnameEdit.setText(decryptString(currentData.getSurname()));
+        if(!currentData.getIban().isEmpty()) ibanEdit.setText(decryptString(currentData.getIban()));
+        if(!currentData.getBic().isEmpty())bicEdit.setText(decryptString(currentData.getBic()));
+        if(!currentData.getBank().isEmpty())bankEdit.setText(decryptString(currentData.getBank()));
 
         btnCancel.setOnClickListener(view1 -> dismiss());
 
@@ -98,11 +99,21 @@ public class CreatePersonFragment extends DialogFragment {
     private void saveData(String name, String surname, String iban, String bic, String bank) throws Exception {
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("name", name);
-        editor.putString("surname", surname);
-        if(iban != null) {editor.putString("iban", iban);}
-        if(bic != null) editor.putString("bic", bic);
-        if(bank != null) editor.putString("bank", bank);
+        editor.putString("name", Utilities.encryptString(name));
+        editor.putString("surname", Utilities.encryptString(surname));
+        if(iban != null) {editor.putString("iban", Utilities.encryptString(iban));}
+        if(bic != null) editor.putString("bic", Utilities.encryptString(bic));
+        if(bank != null) editor.putString("bank", Utilities.encryptString(bank));
         editor.apply();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String decryptString(String toDecrypt){
+        try {
+            return Utilities.decryptToString(toDecrypt);
+        } catch (Exception e) {
+            Log.e("Create Person", String.valueOf(e));
+            return "";
+        }
     }
 }
