@@ -113,7 +113,7 @@ public class CreatePersonFragment extends DialogFragment {
             return Utilities.decryptToString(toDecrypt);
         } catch (Exception e) {
             Log.e("Create Person", String.valueOf(e));
-            return "";
+            return toDecrypt;
         }
     }
 }

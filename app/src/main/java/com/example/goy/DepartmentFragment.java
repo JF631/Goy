@@ -347,7 +347,7 @@ public class DepartmentFragment extends Fragment{
             return Utilities.decryptToString(toDecrypt);
         } catch (Exception e) {
             Log.e("Create Person", String.valueOf(e));
-            return "";
+            return toDecrypt;
         }
     }
 }
