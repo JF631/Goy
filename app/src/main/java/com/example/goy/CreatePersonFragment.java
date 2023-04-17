@@ -1,5 +1,8 @@
 package com.example.goy;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,18 +13,17 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.DialogFragment;
+
+import java.util.Objects;
 
 public class CreatePersonFragment extends DialogFragment {
 
     private EditText nameEdit, surnameEdit, ibanEdit, bicEdit, bankEdit;
 
-    private OnPersonCreateClickedListener onPersonCreateClickedListener;
 
-    public interface OnPersonCreateClickedListener{
-        void onPersonCreateClicked(String name, String surname, String iban, String bic, String bank);
-    }
-
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -34,6 +36,13 @@ public class CreatePersonFragment extends DialogFragment {
         Button btnSave = view.findViewById(R.id.create_save);
         Button btnCancel = view.findViewById(R.id.create_cancel);
 
+        Person currentData = getCurrentData();
+        nameEdit.setText(currentData.getName());
+        surnameEdit.setText(currentData.getSurname());
+        ibanEdit.setText(currentData.getIban());
+        bicEdit.setText(currentData.getBic());
+        bankEdit.setText(currentData.getBank());
+
         btnCancel.setOnClickListener(view1 -> dismiss());
 
         btnSave.setOnClickListener(view1 -> {
@@ -43,7 +52,11 @@ public class CreatePersonFragment extends DialogFragment {
                 String iban = ibanEdit.getText().toString().isEmpty() ? null : ibanEdit.getText().toString();
                 String bic = bicEdit.getText().toString().isEmpty() ? null : bicEdit.getText().toString();
                 String bank = bankEdit.getText().toString().isEmpty() ? null : bankEdit.getText().toString();
-                onPersonCreateClickedListener.onPersonCreateClicked(name, surname, iban, bic, bank);
+                try {
+                    saveData(name, surname, iban, bic, bank);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 dismiss();
             }
         });
@@ -70,7 +83,26 @@ public class CreatePersonFragment extends DialogFragment {
         return true;
     }
 
-    public void setOnPersonCreateClickedListener(OnPersonCreateClickedListener onPersonCreateClickedListener){
-        this.onPersonCreateClickedListener = onPersonCreateClickedListener;
+    private Person getCurrentData(){
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        String name = sharedPreferences.getString("name", "");
+        String surname = sharedPreferences.getString("surname", "");
+        String iban = sharedPreferences.getString("iban", "");
+        String bic = sharedPreferences.getString("bic", "");
+        String bank = sharedPreferences.getString("bank", "");
+
+        return new Person(name, surname, iban, bic, bank);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void saveData(String name, String surname, String iban, String bic, String bank) throws Exception {
+        SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("name", name);
+        editor.putString("surname", surname);
+        if(iban != null) {editor.putString("iban", iban);}
+        if(bic != null) editor.putString("bic", bic);
+        if(bank != null) editor.putString("bank", bank);
+        editor.apply();
     }
 }

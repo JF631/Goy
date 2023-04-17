@@ -188,6 +188,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 item.setChecked(isChecked);
                 return true;
+            case R.id.edit_personal_details:
+                CreatePersonFragment createPersonFragment = new CreatePersonFragment();
+                createPersonFragment.show(getSupportFragmentManager(), "create_person");
+
             default:
                 return super.onOptionsItemSelected(item);
         }

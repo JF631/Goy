@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -22,6 +23,12 @@ public class NotificationHelper {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)){
             return false;
         }
+
+        SharedPreferences sharedPreferences = context.getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        boolean showNotifications = sharedPreferences.getBoolean("showNotifications", false);
+
+        if(!showNotifications)
+            return false;
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, context.getResources().getString(R.string.location_notification_channel_id))
                 .setSmallIcon(com.google.android.gms.base.R.drawable.common_google_signin_btn_icon_disabled)

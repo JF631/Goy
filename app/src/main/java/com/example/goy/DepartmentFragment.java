@@ -53,16 +53,18 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 
 @RequiresApi(api = Build.VERSION_CODES.O)
-public class DepartmentFragment extends Fragment implements CreatePersonFragment.OnPersonCreateClickedListener{
+public class DepartmentFragment extends Fragment{
     private ActivityResultLauncher<String[]> documentPickerLauncher;
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
     private DepartmentAdapter departmentAdapter;
     private View view;
+    private String department;
     private Comparator<Pair<Course, LocalDate>> byDate;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
@@ -83,7 +85,7 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
 
         dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
-        String department = dpSpinner.getSelectedItem().toString();
+        department = dpSpinner.getSelectedItem().toString();
         AtomicReference<String> start = new AtomicReference<>(), end = new AtomicReference<>();
         byDate = Comparator.comparing(Pair::getSecond);
         if (start.get() == null) startDate.setText("start");
@@ -168,8 +170,8 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
         dpSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String selected = adapterView.getItemAtPosition(i).toString();
-                courseDateList = dataBaseHelper.getDates(selected, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
+                department = adapterView.getItemAtPosition(i).toString();
+                courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, isDesc[0]);
             }
 
@@ -201,78 +203,82 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
             Toast.makeText(getContext(), "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
             return;
         }
-        try {
-            File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
-            String downloadDir = downloadDirs[0].getAbsolutePath();
+        File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
+        String downloadDir = downloadDirs[0].getAbsolutePath();
 
-            File pdfFile = new File(downloadDir, docName);
-            if(pdfFile.exists()){
-                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
-                        .setTitle("Datei existiert bereits")
-                        .setMessage("Möchten Sie die Datei überschreiben?")
-                        .setCancelable(false)
-                        .setPositiveButton("löschen", (dialogInterface, i) -> {
-                            dialogInterface.dismiss();
-                        })
-                        .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                            dialogInterface.dismiss();
-                            return;
-                        });
-                AlertDialog dialog = alertBuilder.create();
-                dialog.show();
-            }
-            Log.d("PATH:", downloadDir);
-            InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
-            PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
-            PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
-            Map<String, PdfFormField> fields = form.getFormFields();
-
-            PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA);
-
-            for (Map.Entry<String, PdfFormField> entry : fields.entrySet()) {
-                PdfFormField field = entry.getValue();
-                field.setFont(font);
-                field.setFontSize(10f); // Set the font size to 12
-            }
-
-            Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(formatter));
-            Objects.requireNonNull(fields.get("prename")).setValue(sharedPreferences.getString("name",""));
-            Objects.requireNonNull(fields.get("name")).setValue(sharedPreferences.getString("surname", ""));
-            Objects.requireNonNull(fields.get("iban")).setValue(sharedPreferences.getString("iban", ""));
-            Objects.requireNonNull(fields.get("bic")).setValue(sharedPreferences.getString("bic", ""));
-            Objects.requireNonNull(fields.get("bank")).setValue(sharedPreferences.getString("bank", ""));
-            Objects.requireNonNull(fields.get("department")).setValue(department);
-            Objects.requireNonNull(fields.get("sum")).setValue(String.valueOf(sumDuration));
-
-            int d = 0;
-            String dateKey, durationKey;
-            for (int i = 0; i < size; ++i) {
-                if (i % 22 == 0 && i != 0) d = 1;
-                dateKey = "dt1." + (i % 22) + "." + d;
-                durationKey = "du1." + (i % 22) + "." + d;
-                if (fields.containsKey(dateKey) && fields.containsKey(durationKey)) {
-                    Log.d("TEST", "save");
-                    LocalDate localDate = courseLocalDateList.get(i).getSecond();
-                    String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
-                    Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(formatter));
-                    Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
-                }
-            }
-            pdfDoc.close();
-            Snackbar.make(requireActivity().findViewById(android.R.id.content), "Stundenzettel erstellt", Snackbar.LENGTH_LONG)
-                    .setAction("Anzeigen", view -> showPdf(pdfFile))
-                    .show();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        File pdfFile = new File(downloadDir, docName);
+        AtomicBoolean overwrite = new AtomicBoolean(true);
+        if(pdfFile.exists()){
+            int finalSumDuration = sumDuration;
+            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
+                    .setTitle("Datei existiert bereits")
+                    .setMessage("Möchten Sie die Datei überschreiben?")
+                    .setCancelable(false)
+                    .setPositiveButton("überschreiben", (dialogInterface, i) -> {
+                        dialogInterface.dismiss();
+                        try {
+                            writeToPdf(pdfFile, uri, courseLocalDateList, finalSumDuration, size);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                        dialogInterface.dismiss();
+                        overwrite.set(false);
+                    });
+            AlertDialog dialog = alertBuilder.create();
+            dialog.show();
         }
 
 
     }
-
     private void showCreate(){
         CreatePersonFragment createPersonFragment = new CreatePersonFragment();
         createPersonFragment.show(getChildFragmentManager(), "create_person");
-        createPersonFragment.setOnPersonCreateClickedListener(this);
+    }
+
+    private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, int sumDuration, int size) throws IOException {
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+        PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
+        PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
+        Map<String, PdfFormField> fields = form.getFormFields();
+
+        PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA);
+
+        for (Map.Entry<String, PdfFormField> entry : fields.entrySet()) {
+            PdfFormField field = entry.getValue();
+            field.setFont(font);
+            field.setFontSize(10f); // Set the font size to 12
+        }
+
+        Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(formatter));
+        Objects.requireNonNull(fields.get("prename")).setValue(sharedPreferences.getString("name",""));
+        Objects.requireNonNull(fields.get("name")).setValue(sharedPreferences.getString("surname", ""));
+        Objects.requireNonNull(fields.get("iban")).setValue(sharedPreferences.getString("iban", ""));
+        Objects.requireNonNull(fields.get("bic")).setValue(sharedPreferences.getString("bic", ""));
+        Objects.requireNonNull(fields.get("bank")).setValue(sharedPreferences.getString("bank", ""));
+        Objects.requireNonNull(fields.get("department")).setValue(department);
+        Objects.requireNonNull(fields.get("sum")).setValue(String.valueOf(sumDuration));
+
+        int d = 0;
+        String dateKey, durationKey;
+        for (int i = 0; i < size; ++i) {
+            if (i % 22 == 0 && i != 0) d = 1;
+            dateKey = "dt1." + (i % 22) + "." + d;
+            durationKey = "du1." + (i % 22) + "." + d;
+            if (fields.containsKey(dateKey) && fields.containsKey(durationKey)) {
+                Log.d("TEST", "save");
+                LocalDate localDate = courseLocalDateList.get(i).getSecond();
+                String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
+                Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(formatter));
+                Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
+            }
+        }
+        pdfDoc.close();
+        Snackbar.make(requireActivity().findViewById(android.R.id.content), "Stundenzettel erstellt", Snackbar.LENGTH_LONG)
+                .setAction("Anzeigen", view -> showPdf(pdfFile))
+                .show();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -320,18 +326,5 @@ public class DepartmentFragment extends Fragment implements CreatePersonFragment
             startActivity(intent);
 
         }
-    }
-
-    @Override
-    public void onPersonCreateClicked(String name, String surname, String iban, String bic, String bank) {
-        SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("name", name);
-        editor.putString("surname", surname);
-        if(iban != null) {editor.putString("iban", iban);}
-        if(bic != null) editor.putString("bic", bic);
-        if(bank != null) editor.putString("bank", bank);
-        editor.apply();
-        selectDocument();
     }
 }
