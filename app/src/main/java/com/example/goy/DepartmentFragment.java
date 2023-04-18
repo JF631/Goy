@@ -82,7 +82,7 @@ public class DepartmentFragment extends Fragment{
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
         TextView startDate = view.findViewById(R.id.department_start_date);
         TextView endDate = view.findViewById(R.id.department_end_date);
-        TextView sortType = view.findViewById(R.id.department_asc);
+        TextView dateSort = view.findViewById(R.id.date_sort);
 
         dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
@@ -138,20 +138,20 @@ public class DepartmentFragment extends Fragment{
         Drawable descDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_arrow_down, null);
         assert descDrawable != null;
         descDrawable.setBounds(0, 0, descDrawable.getIntrinsicWidth(), descDrawable.getIntrinsicHeight());
-        sortType.setCompoundDrawables(null, null, descDrawable, null);
-        sortType.invalidate();
+        dateSort.setCompoundDrawables(descDrawable, null, null, null);
+        dateSort.invalidate();
 
         Drawable ascDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_arrow_up, null);
         assert ascDrawable != null;
         ascDrawable.setBounds(0, 0, ascDrawable.getIntrinsicWidth(), ascDrawable.getIntrinsicHeight());
-        sortType.setOnClickListener(view1 -> {
+        dateSort.setOnClickListener(view1 -> {
             isDesc[0] = !isDesc[0];
             if (isDesc[0]) {
-                sortType.setCompoundDrawables(null, null, descDrawable, null);
+                dateSort.setCompoundDrawables(descDrawable, null, null, null);
             } else {
-                sortType.setCompoundDrawables(null, null, ascDrawable, null);
+                dateSort.setCompoundDrawables(ascDrawable, null, null, null);
             }
-            sortType.invalidate();
+            dateSort.invalidate();
             updateList(courseDateList, isDesc[0]);
 
         });

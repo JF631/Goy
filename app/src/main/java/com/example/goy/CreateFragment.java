@@ -57,7 +57,9 @@ public class CreateFragment extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        setStyle(DialogFragment.STYLE_NO_TITLE, R.style.RoundedDialogTheme);
+        super.onCreate(savedInstanceState);
+
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.RoundedDialogTheme);
         View view = inflater.inflate(R.layout.create_course_window, container, false);
         RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
         Button saveBtn = view.findViewById(R.id.create_save_course);

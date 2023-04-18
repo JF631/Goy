@@ -18,7 +18,12 @@
         <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
     </style>
 
-    <style name="RoundedDialogTheme" parent="Theme.AppCompat.Dialog">
-        <item name="android:windowBackground">@drawable/rounded_corners</item>
+    <style name="RoundedDialogTheme" parent="Theme.Material3.Dark.Dialog">
+        <item name="android:background">@drawable/rounded_corners</item>
+        <item name="shapeAppearance">@style/RoundedShapeAppearance</item>
+    </style>
+
+    <style name="RoundedShapeAppearance" parent="">
+        <item name="cornerSize">16dp</item>
     </style>
 </resources>
