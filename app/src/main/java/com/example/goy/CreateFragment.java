@@ -64,7 +64,7 @@ public class CreateFragment extends DialogFragment {
         RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
         Button saveBtn = view.findViewById(R.id.create_save_course);
         Button exitBtn = view.findViewById(R.id.create_exit);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         departmentSpinner = view.findViewById(R.id.create_spinner_departments);
         departmentSpinner.setAdapter(spinnerAdapter);
         etGroup = view.findViewById(R.id.create_et_group);

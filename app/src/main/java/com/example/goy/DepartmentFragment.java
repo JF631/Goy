@@ -77,7 +77,7 @@ public class DepartmentFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.department_date_view, container, false);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, departments);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
         TextView startDate = view.findViewById(R.id.department_start_date);
