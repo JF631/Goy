@@ -27,6 +27,15 @@ import java.util.stream.Collectors;
 public class Course implements Parcelable {
     private String department;
     private String group;
+    private static final HashMap<String, String> MY_MAP = new HashMap() {{
+        put("MONDAY", "Montag");
+        put("TUESDAY", "Dienstag");
+        put("WEDNESDAY", "Mittwoch");
+        put("THURSDAY", "Donnerstag");
+        put("FRIDAY", "Freitag");
+        put("SATURDAY", "Samstag");
+        put("SUNDAY", "Sonntag");
+    }};
     private long courseId = -1;
     private List<Triple<String, LocalTime, LocalTime>> courseTimes;
     private Set<String> locations;
@@ -86,7 +95,7 @@ public class Course implements Parcelable {
     public String getDaysFlattened(){
         List<String> days = new ArrayList<>();
         for(Triple<String, LocalTime, LocalTime> courseTime : courseTimes){
-            days.add(courseTime.getFirst());
+            days.add(MY_MAP.get(courseTime.getFirst()));
         }
         return TextUtils.join(",", days);
     }

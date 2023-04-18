@@ -18,11 +18,22 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
-public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
+public class DateAdapter extends BaseAdapter {
     private final List<LocalDate> dateList;
     private final Course course;
+
+    private static final HashMap<String, String> MY_MAP = new HashMap() {{
+        put("MONDAY", "Montag");
+        put("TUESDAY", "Dienstag");
+        put("WEDNESDAY", "Mittwoch");
+        put("THURSDAY", "Donnerstag");
+        put("FRIDAY", "Freitag");
+        put("SATURDAY", "Samstag");
+        put("SUNDAY", "Sonntag");
+    }};
 
     public DateAdapter(List<LocalDate> dateList, Course course){
         this.dateList = dateList;
@@ -73,13 +84,14 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void onBindViewHolder(@NonNull DateAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        ViewHolder viewHolder = (ViewHolder) holder;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         LocalDate date = dateList.get(position);
-        DataBaseHelper dataBaseHelper = new DataBaseHelper(holder.ctx);
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(viewHolder.ctx);
         String duration = dataBaseHelper.getDuration(course, date.getDayOfWeek());
-        holder.dateView.setText(date.format(formatter));
-        holder.durationView.setText(duration);
+        viewHolder.dateView.setText(date.format(formatter) + " (" + MY_MAP.get(date.getDayOfWeek().toString()) + ")");
+        viewHolder.durationView.setText(duration);
     }
 
     @Override
@@ -104,7 +116,10 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
                     dialogInterface.dismiss();
 
                 })
-                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                    notifyItemChanged(pos);
+                });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
     }

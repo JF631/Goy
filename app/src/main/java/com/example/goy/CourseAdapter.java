@@ -12,9 +12,10 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.HashMap;
 import java.util.List;
 
-public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder> {
+public class CourseAdapter extends BaseAdapter {
 
     private final List<Course> courseList;
 
@@ -67,10 +68,11 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.courseTitle.setText(courseList.get(position).getGroup());
-        holder.courseDays.setText(courseList.get(position).getDaysFlattened());
-        holder.courseLocation.setText(courseList.get(position).getLocationsFlattened());
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        ViewHolder viewHolder = (ViewHolder) holder;
+        viewHolder.courseTitle.setText(courseList.get(position).getGroup());
+        viewHolder.courseDays.setText(courseList.get(position).getDaysFlattened());
+        viewHolder.courseLocation.setText(courseList.get(position).getLocationsFlattened());
     }
 
     @Override

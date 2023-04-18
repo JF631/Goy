@@ -10,11 +10,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,7 +33,18 @@ import java.util.Set;
 public class CourseFragment extends Fragment implements CreateFragment.OnCreateCourseClickedListener{
 
     private Course course;
+    private static final HashMap<String, String> MY_MAP = new HashMap() {{
+        put("MONDAY", "Montag");
+        put("TUESDAY", "Dienstag");
+        put("WEDNESDAY", "Mittwoch");
+        put("THURSDAY", "Donnerstag");
+        put("FRIDAY", "Freitag");
+        put("SATURDAY", "Samstag");
+        put("SUNDAY", "Sonntag");
+    }};
     private TextView courseDepartment, courseGroup, courseTimes, courseLocations, listTitleView;
+
+    private DateAdapter dateAdapter;
 
     public CourseFragment(){}
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -46,8 +59,12 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         ImageView imageView = view.findViewById(R.id.expanded_edit);
         RecyclerView dateView = view.findViewById(R.id.show_course_dates);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        DateAdapter dateAdapter = new DateAdapter(dateList, course);
+        dateAdapter = new DateAdapter(dateList, course);
         dateView.setAdapter(dateAdapter);
+
+        SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(dateAdapter, requireContext());
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
+        itemTouchHelper.attachToRecyclerView(dateView);
 
         FloatingActionButton addButton = view.findViewById(R.id.add_date);
         addButton.setTransitionName("add_button");
@@ -68,8 +85,9 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
                 LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
                 if(!courseDays.contains(selectedDate.getDayOfWeek().toString()))
                     return;
-                dataBaseHelper.insertDate(course, selectedDate);
-                dateAdapter.insertItem(selectedDate);
+                if(dataBaseHelper.insertDate(course, selectedDate))
+                    dateAdapter.insertItem(selectedDate);
+                else Toast.makeText(requireContext(), "Datum bereits in Liste", Toast.LENGTH_SHORT).show();
             }, year, month, dayOfMonth);
 
             datePickerDialog.show();
@@ -93,7 +111,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         String times = "Kurszeiten: \n";
         HashMap<String, Pair<LocalTime, LocalTime>> hashMap = course.getCourseTimesMap();
         for(Map.Entry<String, Pair<LocalTime, LocalTime>> timeEntry : hashMap.entrySet()){
-            times += timeEntry.getKey() + " von " +
+            times += MY_MAP.get(timeEntry.getKey()) + " von " +
                     timeEntry.getValue().getFirst() +
                     " bis " + timeEntry.getValue().getSecond() + "\n";
         }
@@ -154,7 +172,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         String timeString = "Kurszeiten: \n";
         HashMap<String, Pair<LocalTime, LocalTime>> hashMap = course.getCourseTimesMap();
         for(Map.Entry<String, Pair<LocalTime, LocalTime>> timeEntry : hashMap.entrySet()){
-            timeString += timeEntry.getKey() + " von " +
+            timeString += MY_MAP.get(timeEntry.getKey()) + " von " +
                     timeEntry.getValue().getFirst() +
                     " bis " + timeEntry.getValue().getSecond() + "\n";
         }
@@ -167,6 +185,8 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         setCourseTimes(timeString);
         setCourseLocations(locationString);
         setListViewTitle(group + " wurde an folgenden Terminen gehalten: \n");
+
+        dateAdapter.notifyDataSetChanged();
 
         dbHelper.updateLocations(course, locations);
         dbHelper.updateBasicGroupInfo(course, "department_name", department);

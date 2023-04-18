@@ -15,13 +15,24 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
-public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.ViewHolder>{
+public class DepartmentAdapter extends BaseAdapter{
 
     private List<Pair<Course, LocalDate>> courseList;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    private static final HashMap<String, String> MY_MAP = new HashMap() {{
+        put("MONDAY", "Montag");
+        put("TUESDAY", "Dienstag");
+        put("WEDNESDAY", "Mittwoch");
+        put("THURSDAY", "Donnerstag");
+        put("FRIDAY", "Freitag");
+        put("SATURDAY", "Samstag");
+        put("SUNDAY", "Sonntag");
+    }};
 
     public DepartmentAdapter(List<Pair<Course, LocalDate>> courseList){
         this.courseList = courseList;
@@ -68,17 +79,17 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
         return viewHolder;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        ViewHolder viewHolder = (ViewHolder) holder;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         Course course = courseList.get(position).getFirst();
         LocalDate date = courseList.get(position).getSecond();
-        DataBaseHelper dataBaseHelper = new DataBaseHelper(holder.ctx);
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(viewHolder.ctx);
         String duration = dataBaseHelper.getDuration(course, date.getDayOfWeek());
-        holder.dateView.setText(date.format(formatter));
-        holder.durationView.setText(duration);
-        holder.courseView.setText(course.getGroup());
+        viewHolder.dateView.setText(date.format(formatter) + " (" + MY_MAP.get(date.getDayOfWeek().toString()) + ")");
+        viewHolder.durationView.setText(duration);
+        viewHolder.courseView.setText(course.getGroup());
     }
 
     @Override
@@ -110,7 +121,10 @@ public class DepartmentAdapter extends RecyclerView.Adapter<DepartmentAdapter.Vi
                     dialogInterface.dismiss();
 
                 })
-                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                    notifyItemChanged(pos);
+                });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
     }

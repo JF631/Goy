@@ -17,8 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.DialogFragment;
 
-import java.util.Objects;
-
 public class CreatePersonFragment extends DialogFragment {
 
     private EditText nameEdit, surnameEdit, ibanEdit, bicEdit, bankEdit;
@@ -99,7 +97,7 @@ public class CreatePersonFragment extends DialogFragment {
     private void saveData(String name, String surname, String iban, String bic, String bank) throws Exception {
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("name", Utilities.encryptString(name));
+                editor.putString("name", Utilities.encryptString(name));
         editor.putString("surname", Utilities.encryptString(surname));
         if(iban != null) {editor.putString("iban", Utilities.encryptString(iban));}
         if(bic != null) editor.putString("bic", Utilities.encryptString(bic));
