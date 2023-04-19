@@ -1,6 +1,5 @@
 package com.example.goy;
 
-import android.app.TimePickerDialog;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +10,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +29,7 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
     private final List<String> weekdays;
     private final HashMap<String, Pair<LocalTime, LocalTime>> timeList;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+    private FragmentManager fragmentManager;
 
     public interface OnItemClickListener{
         void onItemClick(int position, View itemView);
@@ -38,9 +42,11 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
     }
 
     public WeekdayAdapter(@NonNull List<String> weekdays,
-                          @Nullable HashMap<String, Pair<LocalTime, LocalTime>> timeList){
+                          @Nullable HashMap<String, Pair<LocalTime, LocalTime>> timeList,
+                          @NonNull FragmentManager fragmentManager){
         this.weekdays = weekdays;
         this.timeList = timeList;
+        this.fragmentManager = fragmentManager;
     }
 
 
@@ -81,14 +87,22 @@ public class WeekdayAdapter extends RecyclerView.Adapter<WeekdayAdapter.ViewHold
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        TimePickerDialog timePickerDialog = new TimePickerDialog(view.getContext(), (timePicker, i, i1) -> {
-            textView.setText(String.format("%02d:%02d", i, i1));
+        MaterialTimePicker.Builder builder = new MaterialTimePicker.Builder();
+        builder.setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(hour)
+                .setMinute(minute)
+                .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK);
+
+        MaterialTimePicker timePicker = builder.build();
+
+        timePicker.addOnPositiveButtonClickListener(v -> {
+            int hourOfDay = timePicker.getHour();
+            int minuteOfHour = timePicker.getMinute();
+            textView.setText(String.format("%02d:%02d", hourOfDay, minuteOfHour));
             checkedTextView.setChecked(false);
-        }, hour, minute, true);
+        });
 
-
-        timePickerDialog.show();
-
+        timePicker.show(fragmentManager,  "TimePicker");
     }
 
     @Override

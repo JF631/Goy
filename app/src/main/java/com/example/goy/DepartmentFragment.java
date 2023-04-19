@@ -10,6 +10,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
+import android.transition.Fade;
+import android.transition.TransitionInflater;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +31,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -72,7 +76,7 @@ public class DepartmentFragment extends Fragment{
 
     public DepartmentFragment(){}
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -184,6 +188,28 @@ public class DepartmentFragment extends Fragment{
             public void onNothingSelected(AdapterView<?> adapterView) {
 
             }
+        });
+
+        departmentAdapter.setOnItemClickListener(pos -> {
+            CourseFragment courseFragment = new CourseFragment(courseDateList.get(pos).getSecond().toString());
+            Bundle bundle = new Bundle();
+            Course course = courseDateList.get(pos).getFirst();
+            course.setCourseTimes(dataBaseHelper.getTimes(course));
+            bundle.putParcelable("course", course);
+            courseFragment.setArguments(bundle);
+            FragmentManager fragmentManager = getParentFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            courseFragment.setSharedElementEnterTransition(TransitionInflater.from(getContext())
+                    .inflateTransition(android.R.transition.move));
+            courseFragment.setEnterTransition(new Fade());
+            //setExitTransition(new Fade());
+            //courseFragment.setSharedElementReturnTransition(TransitionInflater.from(getContext())
+                    //.inflateTransition(android.R.transition.move));
+            fragmentTransaction.addSharedElement(floatingActionButton, "export_button");
+            fragmentTransaction.replace(R.id.fragment_container_view, courseFragment);
+            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+            ((MainActivity) requireActivity()).hideNavBar();
         });
 
         departmentAdapter.setOnItemLongClickListener(pos -> departmentAdapter.deleteItem(pos, getContext()));

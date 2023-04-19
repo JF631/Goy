@@ -20,10 +20,14 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -45,8 +49,14 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
     private TextView courseDepartment, courseGroup, courseTimes, courseLocations, listTitleView;
 
     private DateAdapter dateAdapter;
+    private RecyclerView dateView;
 
     public CourseFragment(){}
+
+    private String highlightContent;
+    public CourseFragment(String highlightContent){
+        this.highlightContent = highlightContent;
+    }
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
     @Override
@@ -57,10 +67,14 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         View view = inflater.inflate(R.layout.expanded_course, container, false);
         setUpView(view, course);
         ImageView imageView = view.findViewById(R.id.expanded_edit);
-        RecyclerView dateView = view.findViewById(R.id.show_course_dates);
+        dateView = view.findViewById(R.id.show_course_dates);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
         dateAdapter = new DateAdapter(dateList, course);
         dateView.setAdapter(dateAdapter);
+
+        if(highlightContent != null){
+            highlightRow(highlightContent);
+        }
 
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(dateAdapter, requireContext());
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
@@ -77,20 +91,23 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
 
         addButton.setOnClickListener(view1 -> {
             List<String> courseDays = dataBaseHelper.getWeekDays(course);
-            Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
-            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
-                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
-                if(!courseDays.contains(selectedDate.getDayOfWeek().toString()))
-                    return;
-                if(dataBaseHelper.insertDate(course, selectedDate))
-                    dateAdapter.insertItem(selectedDate);
-                else Toast.makeText(requireContext(), "Datum bereits in Liste", Toast.LENGTH_SHORT).show();
-            }, year, month, dayOfMonth);
 
-            datePickerDialog.show();
+            MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+            MaterialDatePicker<Long> materialDatePicker = builder.build();
+
+            materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+
+                if(!courseDays.contains(localDate.getDayOfWeek().toString()))
+                    return;
+
+                if(dataBaseHelper.insertDate(course, localDate))
+                    dateAdapter.insertItem(localDate);
+                else Toast.makeText(requireContext(), "Datum bereits in Liste", Toast.LENGTH_SHORT).show();
+            });
+
+            materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
+
         });
 
         dateAdapter.setOnItemLongClickListener(pos -> dateAdapter.deleteItem(pos, getContext()));
@@ -131,6 +148,11 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         CreateFragment createFragment = new CreateFragment(course);
         createFragment.show(getChildFragmentManager(), "create_course");
         createFragment.setOnCreateCourseClickedListener(this);
+    }
+
+    private void highlightRow(String rowContent){
+        int pos = dateAdapter.highlightRow(rowContent);
+        dateView.smoothScrollToPosition(pos);
     }
 
     private void setTitle(String group){

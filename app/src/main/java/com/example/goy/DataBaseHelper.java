@@ -83,6 +83,28 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
+    public List<Triple<String, LocalTime, LocalTime>> getTimes(String courseId){
+        List<Triple<String, LocalTime, LocalTime>> foundTimes = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {"weekdays", "endTime", "startTime"};
+        String selection = "courseId=?";
+        String[] args = {courseId};
+
+        Cursor cursor = db.query("course_times", projection, selection, args, null, null, null);
+
+        while (cursor.moveToNext()){
+            LocalTime start = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("startTime")));
+            LocalTime end = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("endTime")));
+            foundTimes.add(new Triple<>(cursor.getString(cursor.getColumnIndexOrThrow("weekday")),
+                    start,
+                    end));
+        }
+        cursor.close();
+        db.close();
+        return foundTimes;
+    }
+
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Course> getCourses(){
         String query = "SELECT c.id AS course_id, c.department_name, c.group_name, " +
@@ -450,9 +472,9 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             LocalTime end = LocalTime.parse(cursor.getString(cursor.getColumnIndexOrThrow("endTime")));
             rtrn.add(new Triple<>(day, start, end));
         }
-
         cursor.close();
         db.close();
+        setLocations(course);
 
         return rtrn;
     }
@@ -505,6 +527,24 @@ public class DataBaseHelper extends SQLiteOpenHelper {
             cursor.close();
             course.setLocations(locations);
         }
+        db.close();
+    }
+
+    private void setLocations(@NonNull Course course){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] projection = {"location"};
+        String selection = "courseId = ?";
+
+        String[] args = {course.getStringId()};
+        Set<String> locations = new HashSet<>();
+        Cursor cursor = db.query("course_locations", projection, selection, args, null, null, null);
+
+        while (cursor.moveToNext()){
+            locations.add(cursor.getString(cursor.getColumnIndexOrThrow("location")));
+        }
+        cursor.close();
+        course.setLocations(locations);
+
         db.close();
     }
 

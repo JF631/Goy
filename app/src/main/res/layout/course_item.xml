@@ -8,7 +8,10 @@
     android:layout_margin="8dp"
     android:background="@drawable/card_background"
     android:elevation="20dp"
-    app:cardCornerRadius="7dp">
+    app:cardCornerRadius="7dp"
+    android:clickable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:focusable="true">
 
     <RelativeLayout
         android:layout_width="match_parent"

@@ -82,7 +82,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
 
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, Objects.requireNonNull(selectedFragment)).commit();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out);
+            transaction.replace(R.id.fragment_container_view, selectedFragment).commit();
             return true;
         });
     }

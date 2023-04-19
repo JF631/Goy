@@ -88,7 +88,7 @@ public class CreateFragment extends BottomSheetDialogFragment {
             saveBtn.setText("übernehmen");
         }
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        WeekdayAdapter adapter = new WeekdayAdapter(days, timeMap);
+        WeekdayAdapter adapter = new WeekdayAdapter(days, timeMap, getChildFragmentManager());
         weekdayView.setAdapter(adapter);
 
 

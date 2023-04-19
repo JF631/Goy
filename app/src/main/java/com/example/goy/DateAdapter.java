@@ -2,7 +2,11 @@ package com.example.goy;
 
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
@@ -23,6 +28,7 @@ import java.util.List;
 
 public class DateAdapter extends BaseAdapter {
     private final List<LocalDate> dateList;
+    private int highlightedPos = -1;
     private final Course course;
 
     private static final HashMap<String, String> MY_MAP = new HashMap() {{
@@ -92,6 +98,8 @@ public class DateAdapter extends BaseAdapter {
         String duration = dataBaseHelper.getDuration(course, date.getDayOfWeek());
         viewHolder.dateView.setText(date.format(formatter) + " (" + MY_MAP.get(date.getDayOfWeek().toString()) + ")");
         viewHolder.durationView.setText(duration);
+
+        viewHolder.setHighlight(position == highlightedPos);
     }
 
     @Override
@@ -118,6 +126,7 @@ public class DateAdapter extends BaseAdapter {
                 })
                 .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
                     dialogInterface.dismiss();
+                    highlightedPos = -1;
                     notifyItemChanged(pos);
                 });
         AlertDialog dialog = alertBuilder.create();
@@ -134,6 +143,25 @@ public class DateAdapter extends BaseAdapter {
 
     }
 
+    public int highlightRow(String content){
+        int pos = findPosByContent(content);
+        if(pos >= 0){
+            highlightedPos = pos;
+            notifyItemChanged(pos);
+        }
+        return pos;
+    }
+
+    private int findPosByContent(String content){
+        for(int i=0; i< dateList.size(); ++i){
+            LocalDate localDate = dateList.get(i);
+            if(localDate.toString().equals(content)){
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder{
         TextView dateView, durationView;
         Context ctx;
@@ -143,5 +171,53 @@ public class DateAdapter extends BaseAdapter {
             durationView = itemView.findViewById(R.id.simple_duration_row);
             ctx = itemView.getContext();
         }
+
+        public void setHighlight(boolean highlight) {
+            if (highlight) {
+                final int FLASH_INTERVAL_MS = 200; // flash interval in milliseconds
+                final int NUM_FLASHES = 3; // number of times to flash
+                final Handler handler = new Handler();
+                final Runnable flashRunnable = new Runnable() {
+                    boolean isHighlighted = true;
+                    int numFlashes = 0; // number of times flashed
+
+                    @Override
+                    public void run() {
+                        if (numFlashes < NUM_FLASHES) {
+                            // create ripple effect
+                            int rippleColor = ContextCompat.getColor(itemView.getContext(), R.color.ripple_color);
+                            RippleDrawable rippleDrawable = new RippleDrawable(new ColorStateList(new int[][]{{}}, new int[]{rippleColor}), null, null);
+                            itemView.setBackground(rippleDrawable);
+
+                            // toggle highlight color
+                            if (isHighlighted) {
+                                itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.ripple_color));
+                            } else {
+                                itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), android.R.color.transparent));
+                            }
+                            isHighlighted = !isHighlighted;
+                            numFlashes++;
+
+                            // schedule next flash
+                            handler.postDelayed(this, FLASH_INTERVAL_MS);
+                        } else {
+                            // reset background color
+                            itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), android.R.color.transparent));
+                            itemView.setBackground(null);
+                        }
+                    }
+                };
+                handler.postDelayed(flashRunnable, FLASH_INTERVAL_MS);
+            } else {
+                // reset background color
+                itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), android.R.color.transparent));
+                itemView.setBackground(null);
+            }
+        }
+
+
+
+
+
     }
 }
