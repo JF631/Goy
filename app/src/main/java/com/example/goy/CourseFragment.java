@@ -72,10 +72,6 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         dateAdapter = new DateAdapter(dateList, course);
         dateView.setAdapter(dateAdapter);
 
-        if(highlightContent != null){
-            highlightRow(highlightContent);
-        }
-
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(dateAdapter, requireContext());
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
         itemTouchHelper.attachToRecyclerView(dateView);
@@ -114,6 +110,9 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
 
 
         imageView.setOnClickListener(view1 -> showCreate());
+        if(highlightContent != null){
+            highlightRow(highlightContent);
+        }
         return view;
     }
 
