@@ -26,4 +26,9 @@
     <style name="RoundedShapeAppearance" parent="">
         <item name="cornerSize">16dp</item>
     </style>
+    
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@android:color/holo_blue_dark</item>
+        <item name="android:background">@drawable/rounded_corners</item>
+    </style>
 </resources>

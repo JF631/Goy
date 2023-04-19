@@ -21,6 +21,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CreateFragment extends DialogFragment {
+public class CreateFragment extends BottomSheetDialogFragment {
     private Spinner departmentSpinner;
     private EditText etGroup;
     private CheckBox cbHall, cbTrack;
@@ -62,7 +64,7 @@ public class CreateFragment extends DialogFragment {
         setStyle(DialogFragment.STYLE_NORMAL, R.style.RoundedDialogTheme);
         View view = inflater.inflate(R.layout.create_course_window, container, false);
         RecyclerView weekdayView = view.findViewById(R.id.create_weekday_list);
-        Button saveBtn = view.findViewById(R.id.create_save_course);
+        Button saveBtn = view.findViewById(R.id.btn_save_course);
         Button exitBtn = view.findViewById(R.id.create_exit);
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         departmentSpinner = view.findViewById(R.id.create_spinner_departments);
@@ -83,7 +85,7 @@ public class CreateFragment extends DialogFragment {
                     .stream()
                     .map(entry -> new Triple<>(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond()))
                     .collect(Collectors.toList());
-            saveBtn.setText("Änderungen Speichern");
+            saveBtn.setText("übernehmen");
         }
         weekdayView.setLayoutManager(new LinearLayoutManager(getActivity()));
         WeekdayAdapter adapter = new WeekdayAdapter(days, timeMap);

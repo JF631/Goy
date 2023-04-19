@@ -4,20 +4,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardPreventCornerOverlap="false"
     app:cardUseCompatPadding="false"
+    app:cardCornerRadius="20dp"
     android:padding="10dp">
 
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:background="@android:color/transparent">
 
-        <Spinner
-            android:id="@+id/create_spinner_departments"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/spinner_save">
+
+            <Spinner
+                android:id="@+id/create_spinner_departments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"/>
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Speichern"
+                android:id="@+id/btn_save_course"
+                android:layout_weight="2"
+                style="@style/ButtonStyle"/>
+
+        </LinearLayout>
 
         <EditText
             android:id="@+id/create_et_group"
@@ -26,7 +44,7 @@
             android:ems="10"
             android:inputType="textPersonName"
             android:hint="Gruppe"
-            android:layout_below="@id/create_spinner_departments"/>
+            android:layout_below="@id/spinner_save"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -59,22 +77,13 @@
             android:layout_below="@id/cb_layout"/>
 
         <Button
-            android:id="@+id/create_save_course"
-            android:text="Kurs anlegen"
-            android:background="@android:color/transparent"
-            android:textColor="@android:color/holo_blue_dark"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/create_weekday_list"/>
-
-        <Button
             android:id="@+id/create_exit"
             android:text="Abbrechen"
             android:background="@android:color/transparent"
             android:textColor="@android:color/holo_blue_dark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/create_save_course" />
+            android:layout_below="@+id/create_weekday_list" />
 
     </RelativeLayout>
 
