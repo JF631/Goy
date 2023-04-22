@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.forms.PdfAcroForm;
@@ -48,10 +49,14 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -68,9 +73,8 @@ public class DepartmentFragment extends Fragment{
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
     private DepartmentAdapter departmentAdapter;
-    private View view;
     private String department;
-    private Comparator<Pair<Course, LocalDate>> byDate;
+    private Comparator<Pair<Course, LocalDate>> byDate, byCourse, byDuration;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
 
@@ -80,19 +84,23 @@ public class DepartmentFragment extends Fragment{
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.department_date_view, container, false);
+        View view = inflater.inflate(R.layout.department_date_view, container, false);
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
         TextView startDate = view.findViewById(R.id.department_start_date);
         TextView endDate = view.findViewById(R.id.department_end_date);
         TextView dateSort = view.findViewById(R.id.date_sort);
+        TextView durationSort = view.findViewById(R.id.duration_sort);
+        TextView courseSort = view.findViewById(R.id.course_sort);
 
         dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
         department = dpSpinner.getSelectedItem().toString();
         AtomicReference<String> start = new AtomicReference<>(), end = new AtomicReference<>();
         byDate = Comparator.comparing(Pair::getSecond);
+        byCourse = Comparator.comparing(t->t.getFirst().getGroup());
+        byDuration = Comparator.comparing(t -> dataBaseHelper.getDuration(t.getFirst(), t.getSecond().getDayOfWeek()));
         if (start.get() == null) startDate.setText("start");
         else startDate.setText(start.toString());
         if(end.get() == null)endDate.setText("end");
@@ -116,27 +124,33 @@ public class DepartmentFragment extends Fragment{
         final boolean[] isDesc = {true};
 
         startDate.setOnClickListener(view1 -> {
-            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
-                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
-                start.set(selectedDate.format(formatter));
+            MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+            MaterialDatePicker<Long> materialDatePicker = builder.build();
+
+            materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                start.set(localDate.format(formatter));
                 startDate.setText(start.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
-                updateList(courseDateList, isDesc[0]);
-            }, year, month, dayOfMonth);
+                updateList(courseDateList, byDate ,isDesc[0]);
+            });
 
-            datePickerDialog.show();
+            materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
         });
 
         endDate.setOnClickListener(view1 -> {
-            DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view2, year1, month1, dayOfMonth1) -> {
-                LocalDate selectedDate = LocalDate.of(year1, month1 + 1, dayOfMonth1);
-                end.set(selectedDate.format(formatter));
+            MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+            MaterialDatePicker<Long> materialDatePicker = builder.build();
+
+            materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                end.set(localDate.format(formatter));
                 endDate.setText(end.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
-                updateList(courseDateList, isDesc[0]);
-            }, year, month, dayOfMonth);
+                updateList(courseDateList, byDate ,isDesc[0]);
+            });
 
-            datePickerDialog.show();
+            materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
         });
 
         Drawable descDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_arrow_down, null);
@@ -149,6 +163,8 @@ public class DepartmentFragment extends Fragment{
         assert ascDrawable != null;
         ascDrawable.setBounds(0, 0, ascDrawable.getIntrinsicWidth(), ascDrawable.getIntrinsicHeight());
         dateSort.setOnClickListener(view1 -> {
+            courseSort.setCompoundDrawables(null, null, null, null);
+            durationSort.setCompoundDrawables(null, null, null, null);
             isDesc[0] = !isDesc[0];
             if (isDesc[0]) {
                 dateSort.setCompoundDrawables(descDrawable, null, null, null);
@@ -156,16 +172,39 @@ public class DepartmentFragment extends Fragment{
                 dateSort.setCompoundDrawables(ascDrawable, null, null, null);
             }
             dateSort.invalidate();
-            updateList(courseDateList, isDesc[0]);
+            updateList(courseDateList, byDate, isDesc[0]);
+        });
 
+        durationSort.setOnClickListener(view1 -> {
+            courseSort.setCompoundDrawables(null, null, null, null);
+            dateSort.setCompoundDrawables(null, null, null, null);
+            isDesc[0] = !isDesc[0];
+            if (isDesc[0]) {
+                durationSort.setCompoundDrawables(descDrawable, null, null, null);
+            } else {
+                durationSort.setCompoundDrawables(ascDrawable, null, null, null);
+            }
+            durationSort.invalidate();
+            updateList(courseDateList, byDuration, isDesc[0]);
+
+        });
+
+        courseSort.setOnClickListener(view1 -> {
+            dateSort.setCompoundDrawables(null, null, null, null);
+            durationSort.setCompoundDrawables(null, null, null, null);
+            isDesc[0] = !isDesc[0];
+            if (isDesc[0]) {
+                courseSort.setCompoundDrawables(descDrawable, null, null, null);
+            } else {
+                courseSort.setCompoundDrawables(ascDrawable, null, null, null);
+            }
+            courseSort.invalidate();
+            updateList(courseDateList, byCourse, isDesc[0]);
         });
 
         documentPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) {
-                Log.d("DP", uri.getPath());
-                export(uri, courseDateList, department);;
-                // Handle the selected file URI here
-                // ...
+                export(uri, courseDateList, department);
             }
         });
 
@@ -181,7 +220,7 @@ public class DepartmentFragment extends Fragment{
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 department = adapterView.getItemAtPosition(i).toString();
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
-                updateList(courseDateList, isDesc[0]);
+                updateList(courseDateList, byDate, isDesc[0]);
             }
 
             @Override
@@ -344,9 +383,9 @@ public class DepartmentFragment extends Fragment{
         documentPickerLauncher.launch(new String[]{mimeType});
     }
 
-    private void updateList(List<Pair<Course, LocalDate>> values, boolean desc){
-        if(desc) values.sort(byDate.reversed());
-        else values.sort(byDate);
+    private void updateList(List<Pair<Course, LocalDate>> values, Comparator<Pair<Course, LocalDate>> comp ,boolean desc){
+        if(desc) values.sort(comp.reversed());
+        else values.sort(comp);
         departmentAdapter.switchList(values);
     }
 

@@ -21,7 +21,6 @@ public class CreatePersonFragment extends DialogFragment {
 
     private EditText nameEdit, surnameEdit, ibanEdit, bicEdit, bankEdit;
 
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
     @Override
@@ -36,11 +35,11 @@ public class CreatePersonFragment extends DialogFragment {
         Button btnCancel = view.findViewById(R.id.create_cancel);
 
         Person currentData = getCurrentData();
-        if(!currentData.getName().isEmpty())nameEdit.setText(decryptString(currentData.getName()));
-        if(!currentData.getSurname().isEmpty())surnameEdit.setText(decryptString(currentData.getSurname()));
+        if(!currentData.getName().isEmpty()) nameEdit.setText(decryptString(currentData.getName()));
+        if(!currentData.getSurname().isEmpty()) surnameEdit.setText(decryptString(currentData.getSurname()));
         if(!currentData.getIban().isEmpty()) ibanEdit.setText(decryptString(currentData.getIban()));
-        if(!currentData.getBic().isEmpty())bicEdit.setText(decryptString(currentData.getBic()));
-        if(!currentData.getBank().isEmpty())bankEdit.setText(decryptString(currentData.getBank()));
+        if(!currentData.getBic().isEmpty()) bicEdit.setText(decryptString(currentData.getBic()));
+        if(!currentData.getBank().isEmpty()) bankEdit.setText(decryptString(currentData.getBank()));
 
         btnCancel.setOnClickListener(view1 -> dismiss());
 
@@ -69,7 +68,7 @@ public class CreatePersonFragment extends DialogFragment {
             return false;
         }
 
-        if(ibanEdit.getText().length() != 22) {
+        if(!ibanEdit.getText().toString().isEmpty() && ibanEdit.getText().length() != 22) {
             Toast.makeText(requireContext(), "IBAN überprüfen", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -97,11 +96,15 @@ public class CreatePersonFragment extends DialogFragment {
     private void saveData(String name, String surname, String iban, String bic, String bank) throws Exception {
         SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("name", Utilities.encryptString(name));
+
+        editor.putString("name", Utilities.encryptString(name));
         editor.putString("surname", Utilities.encryptString(surname));
         if(iban != null) {editor.putString("iban", Utilities.encryptString(iban));}
+        else editor.putString("iban", "");
         if(bic != null) editor.putString("bic", Utilities.encryptString(bic));
+        else editor.putString("bic", "");
         if(bank != null) editor.putString("bank", Utilities.encryptString(bank));
+        else editor.putString("bank", "");
         editor.apply();
     }
 
