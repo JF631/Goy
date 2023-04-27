@@ -12,6 +12,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -85,7 +87,7 @@ public class CourseAdapter extends BaseAdapter {
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
 
         Course course = courseList.get(pos);
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
+        MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Kurs löschen?")
                 .setMessage("Möchten Sie den Kurs " + course.getGroup() + " endgültig lsöschen?\n" +
                         "ACHTUNG: Es werden auch alle zugehörigen Termine gelöscht!")

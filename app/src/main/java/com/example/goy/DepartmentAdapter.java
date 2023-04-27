@@ -13,6 +13,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -107,7 +109,7 @@ public class DepartmentAdapter extends BaseAdapter{
         LocalDate date = courseList.get(pos).getSecond();
         String course = courseList.get(pos).getFirst().getGroup();
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
+        MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Datum löschen?")
                 .setMessage("Möchten Sie den " + date.format(formatter) + " vom Kurs " + course + " löschen?")
                 .setCancelable(false)

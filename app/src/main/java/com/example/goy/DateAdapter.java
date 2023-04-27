@@ -19,6 +19,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -110,7 +112,7 @@ public class DateAdapter extends BaseAdapter {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
         LocalDate date = dateList.get(pos);
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
-        AlertDialog.Builder alertBuilder = new AlertDialog.Builder(ctx)
+        MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Datum löschen?")
                 .setMessage("Möchten Sie den " + date.format(formatter) + " aus der Liste entfernen?")
                 .setCancelable(false)
