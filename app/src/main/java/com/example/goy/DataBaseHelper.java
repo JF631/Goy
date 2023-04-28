@@ -211,7 +211,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
         Cursor cursor = db.query("course_times", projection, selection, args, null, null, null);
         if(cursor.moveToFirst()){
-            return cursor.getString(cursor.getColumnIndexOrThrow("duration"));
+            return cursor.getString(cursor.getColumnIndexOrThrow("duration")).replaceAll(",", ".");
         }
         cursor.close();
         db.close();
