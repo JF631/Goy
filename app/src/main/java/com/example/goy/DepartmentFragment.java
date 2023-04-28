@@ -113,7 +113,7 @@ public class DepartmentFragment extends Fragment{
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
         dateView.setAdapter(departmentAdapter);
 
-        durationSort.setText("duration (\u2211" + getCurrentDurationSum(courseDateList) + ")");
+        durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
 
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(departmentAdapter, requireContext());
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
@@ -131,7 +131,7 @@ public class DepartmentFragment extends Fragment{
                 startDate.setText(start.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate ,isDesc[0]);
-                durationSort.setText("duration (\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
             });
 
             materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
@@ -147,7 +147,7 @@ public class DepartmentFragment extends Fragment{
                 endDate.setText(end.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate ,isDesc[0]);
-                durationSort.setText("duration (\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
             });
 
             materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
@@ -221,7 +221,7 @@ public class DepartmentFragment extends Fragment{
                 department = adapterView.getItemAtPosition(i).toString();
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate, isDesc[0]);
-                durationSort.setText("duration (\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
             }
 
             @Override
@@ -309,13 +309,13 @@ public class DepartmentFragment extends Fragment{
         }
     }
 
-    private int getCurrentDurationSum(List<Pair<Course, LocalDate>> courseDateList) {
+    private double getCurrentDurationSum(List<Pair<Course, LocalDate>> courseDateList) {
         return courseDateList.stream()
-                .mapToInt(pair -> {
+                .mapToDouble(pair -> {
                     try {
-                        return Integer.parseInt(dataBaseHelper.getDuration(pair.getFirst(), pair.getSecond().getDayOfWeek()));
+                        return Double.parseDouble(dataBaseHelper.getDuration(pair.getFirst(), pair.getSecond().getDayOfWeek()));
                     } catch (NumberFormatException e) {
-                        return 0;
+                        return 0.0;
                     }
                 })
                 .sum();
