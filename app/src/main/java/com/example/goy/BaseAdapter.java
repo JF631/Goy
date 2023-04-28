@@ -2,6 +2,7 @@ package com.example.goy;
 
 import android.content.Context;
 import android.view.View;
+
 import androidx.recyclerview.widget.RecyclerView;
 
 public abstract class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

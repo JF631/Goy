@@ -3,7 +3,6 @@ package com.example.goy;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Build;
 import android.os.Handler;

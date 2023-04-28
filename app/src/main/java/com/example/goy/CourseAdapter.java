@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class CourseAdapter extends BaseAdapter {
