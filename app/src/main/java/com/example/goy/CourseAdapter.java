@@ -89,11 +89,11 @@ public class CourseAdapter extends BaseAdapter {
         Course course = courseList.get(pos);
         MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Kurs löschen?")
-                .setMessage("Möchten Sie den Kurs " + course.getGroup() + " endgültig lsöschen?\n" +
-                        "ACHTUNG: Es werden auch alle zugehörigen Termine gelöscht!")
+                .setMessage("Möchten Sie den Kurs " + course.getGroup() + " endgültig löschen?\n" +
+                        "ACHTUNG: Standardmäßig werden auch alle zugehörigen Termine gelöscht!")
                 .setCancelable(false)
                 .setPositiveButton("Löschen", (dialogInterface, i) -> {
-                    if(dataBaseHelper.deleteCourse(courseList.get(pos))){
+                    if(dataBaseHelper.deleteCourse(courseList.get(pos), true)){
                         courseList.remove(pos);
                         notifyItemRemoved(pos);
                     }

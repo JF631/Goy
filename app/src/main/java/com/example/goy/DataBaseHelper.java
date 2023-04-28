@@ -558,11 +558,12 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         insertLocations(course, locations);
     }
 
-    public boolean deleteCourse(@NonNull Course course){
+    public boolean deleteCourse(@NonNull Course course, boolean deleteDates){
         SQLiteDatabase db = this.getWritableDatabase();
         try {
             db.delete("courses", "id = ?", new String[]{course.getStringId()});
-            db.delete("course_date", "courseId = ?", new String[]{course.getStringId()});
+            if(deleteDates)
+                db.delete("course_date", "courseId = ?", new String[]{course.getStringId()});
             db.delete("course_times", "courseId = ?", new String[]{course.getStringId()});
             db.delete("course_locations", "courseId = ?", new String[]{course.getStringId()});
         }catch (SQLException e){
