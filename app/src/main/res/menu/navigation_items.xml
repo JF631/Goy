@@ -8,7 +8,13 @@
 
     <item
         android:id="@+id/item_dateList"
-        android:title="Übersicht"
+        android:title="Stunden"
         android:icon="@drawable/ic_dates"/>
+
+    <item
+        android:id="@+id/item_files"
+        android:title="Stundenzettel"
+        android:icon="@drawable/ic_pdf_export"
+        />
 
 </menu>

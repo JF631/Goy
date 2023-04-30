@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:clickable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:focusable="true">
+
+    <ImageView
+        android:layout_width="30dp"
+        android:layout_height="match_parent"
+        android:foregroundGravity="center"
+        android:src="@drawable/ic_pdf"
+        android:id="@+id/pdf_icon"
+        />
+    <TextView
+        android:id="@+id/file_name_row"
+        android:layout_width="match_parent"
+        android:layout_toEndOf="@+id/pdf_icon"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        />
+</RelativeLayout>

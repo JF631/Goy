@@ -44,12 +44,18 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-        // Add the fragment to the layout
+        // Remove any existing fragments from the container
+        for (Fragment fragment : fragmentManager.getFragments()) {
+            fragmentTransaction.remove(fragment);
+        }
+
+        // Add the new fragment to the layout
         HomeFragment homeFragment = new HomeFragment();
-        fragmentTransaction.add(R.id.fragment_container_view, homeFragment);
+        fragmentTransaction.replace(R.id.fragment_container_view, homeFragment);
 
         // Commit the transaction
         fragmentTransaction.commit();
+
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)  requiredPermissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
@@ -72,8 +78,11 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.item_dateList:
                     selectedFragment = new DepartmentFragment();
                     break;
-                default:
+                case R.id.item_home:
                     selectedFragment = new HomeFragment();
+                    break;
+                default:
+                    selectedFragment = new FilesFragment();
             }
 
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();

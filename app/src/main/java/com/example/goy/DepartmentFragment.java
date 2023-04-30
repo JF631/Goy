@@ -1,5 +1,6 @@
 package com.example.goy;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,6 +38,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.forms.PdfAcroForm;
@@ -238,9 +240,6 @@ public class DepartmentFragment extends Fragment{
             courseFragment.setSharedElementEnterTransition(TransitionInflater.from(getContext())
                     .inflateTransition(android.R.transition.move));
             courseFragment.setEnterTransition(new Fade());
-            //setExitTransition(new Fade());
-            //courseFragment.setSharedElementReturnTransition(TransitionInflater.from(getContext())
-                    //.inflateTransition(android.R.transition.move));
             fragmentTransaction.addSharedElement(floatingActionButton, "export_button");
             fragmentTransaction.replace(R.id.fragment_container_view, courseFragment);
             fragmentTransaction.addToBackStack(null);
@@ -278,7 +277,7 @@ public class DepartmentFragment extends Fragment{
 
         if(pdfFile.exists()){
             double finalSumDuration = sumDuration;
-            AlertDialog.Builder alertBuilder = new AlertDialog.Builder(requireContext())
+            MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Datei existiert bereits")
                     .setMessage("Möchten Sie die Datei überschreiben?")
                     .setCancelable(false)
@@ -404,7 +403,7 @@ public class DepartmentFragment extends Fragment{
             shareIntent.setType("application/pdf");
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-            requireContext().startActivity(Intent.createChooser(shareIntent, "Zettel senden"));
+            requireContext().startActivity(Intent.createChooser(shareIntent, "Stundenzettel senden"));
         }
     }
 
@@ -414,7 +413,11 @@ public class DepartmentFragment extends Fragment{
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(uri, "application/pdf");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
+            try {
+                startActivity(intent);
+            }catch (ActivityNotFoundException e){
+                Toast.makeText(requireContext(), "Keine App zum öffnnen von Pdf Dateien gefunden", Toast.LENGTH_LONG).show();
+            }
 
         }
     }
