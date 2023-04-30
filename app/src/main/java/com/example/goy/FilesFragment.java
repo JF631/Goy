@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ import java.util.Objects;
 
 public class FilesFragment extends Fragment {
     private ArrayList<File> files;
+    private View emptyView;
 
     public FilesFragment(){}
 
@@ -37,8 +39,9 @@ public class FilesFragment extends Fragment {
         File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
         files = new ArrayList<>(Arrays.asList(Objects.requireNonNull(downloadDirs[0].listFiles())));
         View view;
+        emptyView = inflater.inflate(R.layout.empty_window, container, false);
         if (files.isEmpty()){
-            view = inflater.inflate(R.layout.empty_window, container, false);
+            view = emptyView;
         }else {
             view = inflater.inflate(R.layout.file_view, container, false);
             RecyclerView recyclerView = view.findViewById(R.id.file_recycler_view);

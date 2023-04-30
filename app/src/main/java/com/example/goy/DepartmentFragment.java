@@ -51,6 +51,7 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
@@ -63,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -71,6 +73,7 @@ public class DepartmentFragment extends Fragment{
     private ActivityResultLauncher<String[]> documentPickerLauncher;
     List<Pair<Course, LocalDate>> courseDateList;
     private static DataBaseHelper dataBaseHelper;
+    private boolean rememberFile = false;
     private DepartmentAdapter departmentAdapter;
     private String department;
     private Comparator<Pair<Course, LocalDate>> byDate, byCourse, byDuration;
@@ -92,6 +95,8 @@ public class DepartmentFragment extends Fragment{
         TextView dateSort = view.findViewById(R.id.date_sort);
         TextView durationSort = view.findViewById(R.id.duration_sort);
         TextView courseSort = view.findViewById(R.id.course_sort);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
 
         dpSpinner.setAdapter(spinnerAdapter);
         FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
@@ -203,16 +208,37 @@ public class DepartmentFragment extends Fragment{
 
         documentPickerLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
             if (uri != null) {
+                if(rememberFile)
+                    editor.putString("fileUri", uri.toString());
+                else
+                    editor.putString("fileUri", "");
+
+                editor.apply();
                 export(uri, courseDateList, department);
             }
         });
 
         floatingActionButton.setOnClickListener(view1 -> {
-            SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-            if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
-            else selectDocument();
+            String msg = "Möchten Sie die angezeigten Daten für die Abteilung " + department + " exportieren?";
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Daten exportieren?")
+                    .setMessage(msg)
+                    .setPositiveButton("Exportieren", (dialogInterface, i) -> {
+                        if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
+                        if(sharedPreferences.getString("fileUri", "").isEmpty()) selectDocument();
+                        else export(Uri.parse(sharedPreferences.getString("fileUri", "")), courseDateList, department);
+                    })
+                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
 
+
+            if (sharedPreferences.getString("fileUri", "").length() > 0) {
+                builder.setNeutralButton("Datei auswählen", (dialogInterface, i) -> selectDocument());
+            }
+
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
         });
+
 
         dpSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -287,7 +313,8 @@ public class DepartmentFragment extends Fragment{
                         try {
                             writeToPdf(pdfFile, uri, courseLocalDateList, finalSumDuration, size);
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            Toast.makeText(requireContext(), "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
+                            Log.e("Export error: ", e.toString());
                         }
                     })
                     .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
@@ -324,8 +351,15 @@ public class DepartmentFragment extends Fragment{
 
     private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, double sumDuration, int size) throws IOException {
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-        InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+        InputStream inputStream;
+        try {
+             inputStream = requireContext().getContentResolver().openInputStream(uri);
+        }catch (FileNotFoundException e){
+            Toast.makeText(requireContext(), "Datei (blanko Stundenzettel) konnte nicht geöffnet werden", Toast.LENGTH_LONG).show();
+            return;
+        }
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
         PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
         Map<String, PdfFormField> fields = form.getFormFields();
@@ -344,7 +378,7 @@ public class DepartmentFragment extends Fragment{
         String bic = sharedPreferences.getString("bic", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bic", ""));
         String bank = sharedPreferences.getString("bank", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bank", ""));
 
-        Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(formatter));
+        Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(dateTimeFormatter));
         Objects.requireNonNull(fields.get("prename")).setValue(name);
         Objects.requireNonNull(fields.get("name")).setValue(surname);
         Objects.requireNonNull(fields.get("iban")).setValue(iban);
@@ -363,7 +397,7 @@ public class DepartmentFragment extends Fragment{
                 Log.d("TEST", "save");
                 LocalDate localDate = courseLocalDateList.get(i).getSecond();
                 String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
-                Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(formatter));
+                Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(dateTimeFormatter));
                 Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
             }
         }
@@ -375,21 +409,34 @@ public class DepartmentFragment extends Fragment{
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void selectDocument(){
+        final String[] items = {"Datei für den nächsten Export merken"};
+        AtomicInteger selected = new AtomicInteger(-1);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Leeren Stundenzettel auswählen")
+                .setPositiveButton("auswählen", (dialogInterface, i) -> {
+                    Log.d("EXPORT: ", String.valueOf(selected.get()));
+                    String mimeType = "application/pdf";
+                    if(selected.get() == 0)
+                        rememberFile = true;
+                    // Create an intent to open the document chooser
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.setType(mimeType);
 
-        String mimeType = "application/pdf";
-
-        // Create an intent to open the document chooser
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.setType(mimeType);
-
-        // Add the allowed directories as additional locations for the document chooser
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, requireActivity().getExternalFilesDir(null));
+                    // Add the allowed directories as additional locations for the document chooser
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                    intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, requireActivity().getExternalFilesDir(null));
 
 
-        // Start the document chooser activity
-        documentPickerLauncher.launch(new String[]{mimeType});
+                    // Start the document chooser activity
+                    documentPickerLauncher.launch(new String[]{mimeType});
+
+                })
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss())
+                .setSingleChoiceItems(items, selected.get(), (dialogInterface, i) -> selected.set(i));
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
     private void updateList(List<Pair<Course, LocalDate>> values, Comparator<Pair<Course, LocalDate>> comp ,boolean desc){
