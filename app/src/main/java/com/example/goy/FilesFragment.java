@@ -54,8 +54,8 @@ public class FilesFragment extends Fragment {
             fileAdapter.setOnItemClickListener(pos -> {
                 File file = files.get(pos);
                 MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Datei löschen?")
-                        .setMessage("Möchten Sie die Datei " + file.getName() + " löschen?")
+                        .setTitle("Aktionen")
+                        .setMessage("Möchten Sie die Datei " + file.getName() + " öffnen oder teilen?")
                         .setCancelable(false)
                         .setPositiveButton("Öffnen", (dialogInterface, i) -> {
                             showPdf(file);

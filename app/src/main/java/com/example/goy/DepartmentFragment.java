@@ -53,6 +53,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -322,6 +323,7 @@ public class DepartmentFragment extends Fragment{
     }
 
     private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, double sumDuration, int size) throws IOException {
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
@@ -349,7 +351,7 @@ public class DepartmentFragment extends Fragment{
         Objects.requireNonNull(fields.get("bic")).setValue(bic);
         Objects.requireNonNull(fields.get("bank")).setValue(bank);
         Objects.requireNonNull(fields.get("department")).setValue(department);
-        Objects.requireNonNull(fields.get("sum")).setValue(String.valueOf(sumDuration));
+        Objects.requireNonNull(fields.get("sum")).setValue(decimalFormat.format(sumDuration));
 
         int d = 0;
         String dateKey, durationKey;
