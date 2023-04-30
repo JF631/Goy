@@ -302,7 +302,7 @@ public class DepartmentFragment extends Fragment{
         String surname = decryptString(sharedPreferences.getString("surname", ""));
         String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department + ".pdf";
         int size = courseLocalDateList.size();
-        if (size >= 43) {
+        if (size > 43) {
             Toast.makeText(getContext(), "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
             return;
         }
