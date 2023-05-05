@@ -15,7 +15,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 public class FileAdapter extends BaseAdapter{
     private final ArrayList<File> files;

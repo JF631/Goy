@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Goy</string>
+    <string name="app_name">TRACKS</string>
     <string-array name="weekday_array">
         <item>Sunday</item>
         <item>Monday</item>
