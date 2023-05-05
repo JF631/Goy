@@ -2,17 +2,22 @@ package com.example.goy;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.util.Linkify;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -22,6 +27,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import java.util.regex.Pattern;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
 public class MainActivity extends AppCompatActivity {
@@ -196,9 +204,32 @@ public class MainActivity extends AppCompatActivity {
             case R.id.edit_personal_details:
                 CreatePersonFragment createPersonFragment = new CreatePersonFragment();
                 createPersonFragment.show(getSupportFragmentManager(), "create_person");
-
+                return true;
+            case R.id.show_about:
+                showAbout();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    private void showAbout(){
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+                .setTitle("Über TRACKS")
+                .setMessage("TuS Real-time Activity Check-in and Keeping System\n" +
+                        "Kontakt: software_jaf@mx442.de")
+                .setCancelable(false)
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
+                    dialogInterface.dismiss();
+                });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+        TextView emailTextView = alertDialog.findViewById(android.R.id.message);
+        if (emailTextView != null) {
+            Pattern pattern = Patterns.EMAIL_ADDRESS;
+            Linkify.addLinks(emailTextView, pattern, "mailto:");
+        }
+    }
+
 }
