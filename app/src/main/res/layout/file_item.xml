@@ -7,19 +7,28 @@
     android:focusable="true">
 
     <ImageView
+        android:id="@+id/pdf_icon"
         android:layout_width="30dp"
         android:layout_height="match_parent"
         android:foregroundGravity="center"
-        android:src="@drawable/ic_pdf"
-        android:id="@+id/pdf_icon"
-        />
+        android:src="@drawable/ic_pdf" />
+
     <TextView
         android:id="@+id/file_name_row"
-        android:layout_width="match_parent"
-        android:layout_toEndOf="@+id/pdf_icon"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_toEndOf="@+id/pdf_icon"
         android:gravity="center_vertical"
         android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        />
+        android:paddingEnd="8dp" />
+
+    <ImageView
+        android:id="@+id/share_icon"
+        android:layout_width="30dp"
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@+id/file_name_row"
+        android:foregroundGravity="center"
+        android:src="@android:drawable/ic_menu_share"
+        android:paddingStart="8dp"/>
+
 </RelativeLayout>
