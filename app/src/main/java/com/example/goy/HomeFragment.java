@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.LocalTime;
@@ -37,7 +38,7 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.home_view, container, false);
         RecyclerView homeView = view.findViewById(R.id.home_course_view);
-        FloatingActionButton addButton = view.findViewById(R.id.add_course);
+        ExtendedFloatingActionButton addButton = view.findViewById(R.id.add_course);
 
         Transition sharedElementTransition = TransitionInflater.from(getContext())
                 .inflateTransition(android.R.transition.slide_bottom);

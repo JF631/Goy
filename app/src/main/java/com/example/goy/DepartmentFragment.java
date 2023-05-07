@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.forms.PdfAcroForm;
@@ -99,7 +100,7 @@ public class DepartmentFragment extends Fragment{
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
 
         dpSpinner.setAdapter(spinnerAdapter);
-        FloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
+        ExtendedFloatingActionButton floatingActionButton = view.findViewById(R.id.export_btn);
         department = dpSpinner.getSelectedItem().toString();
         AtomicReference<String> start = new AtomicReference<>(), end = new AtomicReference<>();
         byDate = Comparator.comparing(Pair::getSecond);
@@ -220,9 +221,18 @@ public class DepartmentFragment extends Fragment{
         });
 
         floatingActionButton.setOnClickListener(view1 -> {
-            String msg = "Möchten Sie die angezeigten Daten für die Abteilung " + department + " exportieren?";
+            String timePeriod = "Zeitraum: ";
+            if(!startDate.getText().equals("start"))
+                timePeriod += " vom " + startDate.getText();
+            if(!endDate.getText().equals("end"))
+                timePeriod += " bis " + endDate.getText();
+            if(startDate.getText().equals("start") && endDate.getText().equals("end"))
+                timePeriod += "gesamt";
+
+            String msg = "Möchten Sie die Stunden für die Abteilung " + department + " exportieren?\n" +
+                    timePeriod;
             MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Daten exportieren?")
+                    .setTitle("Daten exportieren")
                     .setMessage(msg)
                     .setPositiveButton("Exportieren", (dialogInterface, i) -> {
                         if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
