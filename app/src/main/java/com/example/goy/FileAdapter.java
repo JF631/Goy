@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class FileAdapter extends BaseAdapter{
     private ArrayList<File> files;
@@ -104,7 +106,17 @@ public class FileAdapter extends BaseAdapter{
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
+        long currentTime = System.currentTimeMillis();
+
+        CharSequence timeAgo = DateUtils.getRelativeTimeSpanString(
+                files.get(position).lastModified(),
+                currentTime,
+                DateUtils.SECOND_IN_MILLIS,
+                DateUtils.FORMAT_ABBREV_RELATIVE
+        );
+
         viewHolder.fileName.setText(files.get(position).getName());
+        viewHolder.dateView.setText("Zuletzt bearbeitet " + timeAgo);
         viewHolder.shareBtn.setOnClickListener(view -> {
             File file = files.get(position);
             sharePdf(file);
@@ -127,12 +139,13 @@ public class FileAdapter extends BaseAdapter{
     public int getItemCount() {return files.size();}
 
     private static class ViewHolder extends RecyclerView.ViewHolder{
-        TextView fileName;
+        TextView fileName, dateView;
         ImageView shareBtn;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             fileName = itemView.findViewById(R.id.file_name_row);
+            dateView = itemView.findViewById(R.id.file_date_row);
             shareBtn = itemView.findViewById(R.id.share_icon);
         }
     }
