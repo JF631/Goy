@@ -306,6 +306,66 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<Course, LocalDate>> getDates(@NonNull LocalDate start, @Nullable LocalDate end){
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
+        List<Course> courses = getCourses();
+        String[] projection = {"date"};
+        String selection = "date >= ?";
+        List<String> args = new ArrayList<>();
+        args.add(start.format(formatter));
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+        }
+
+        for(Course course : courses){
+            args.add(0, course.getStringId());
+            Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
+            while (cursor.moveToNext()){
+                String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                LocalDate cDate = LocalDate.parse(courseDate, formatter);
+                Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
+                rtrn.add(courseDatePair);
+            }
+            cursor.close();
+            args.remove(0);
+        }
+        db.close();
+        return rtrn;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<Course, LocalDate>> getDates(@NonNull Course course, @Nullable LocalDate start, @Nullable LocalDate end){
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
+        String[] projection = {"date"};
+        String selection = "courseId = ?";
+        List<String> args = new ArrayList<>();
+        if(start != null){
+            selection += " AND date >= ?";
+            args.add(start.format(formatter));
+        }
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+            Log.d("args: ", args.toString());
+        }
+        args.add(0, course.getStringId());
+        Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
+        while (cursor.moveToNext()){
+            String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+            LocalDate cDate = LocalDate.parse(courseDate, formatter);
+            Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
+            rtrn.add(courseDatePair);
+        }
+        cursor.close();
+        args.remove(0);
+        db.close();
+        return rtrn;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Pair<Course, LocalDate>> getDates(@NonNull String department, @Nullable LocalDate start, @Nullable LocalDate end){
         SQLiteDatabase db = this.getReadableDatabase();
         List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();

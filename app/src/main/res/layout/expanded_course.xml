@@ -43,6 +43,15 @@
                     android:layout_height="match_parent"
                     android:src="@drawable/ic_edit"
                     android:layout_gravity="end"/>
+                <ImageView
+                    android:id="@+id/expaned_export"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_pdf"
+                    android:layout_gravity="end"
+                    />
 
             </LinearLayout>
 

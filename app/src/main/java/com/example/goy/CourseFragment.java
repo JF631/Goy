@@ -1,9 +1,13 @@
 package com.example.goy;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,26 +18,32 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.File;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class CourseFragment extends Fragment implements CreateFragment.OnCreateCourseClickedListener{
 
     private Course course;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final HashMap<String, String> MY_MAP = new HashMap() {{
         put("MONDAY", "Montag");
         put("TUESDAY", "Dienstag");
@@ -64,6 +74,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         View view = inflater.inflate(R.layout.expanded_course, container, false);
         setUpView(view, course);
         ImageView imageView = view.findViewById(R.id.expanded_edit);
+        ImageView exportView = view.findViewById(R.id.expaned_export);
         dateView = view.findViewById(R.id.show_course_dates);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
         dateAdapter = new DateAdapter(dateList, course);
@@ -106,7 +117,59 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         dateAdapter.setOnItemLongClickListener(pos -> dateAdapter.deleteItem(pos, getContext()));
 
 
+
         imageView.setOnClickListener(view1 -> showCreate());
+        exportView.setOnClickListener(view2 -> {
+            SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
+            MaterialAlertDialogBuilder exportDialog = new MaterialAlertDialogBuilder(requireContext());
+            LayoutInflater dialogInflater = requireActivity().getLayoutInflater();
+            View dialogView = dialogInflater.inflate(R.layout.export_course_list_view, null);
+            TextView exportStart = dialogView.findViewById(R.id.export_start_date);
+            TextView exportEnd = dialogView.findViewById(R.id.export_end_date);
+            String currentStart = "Startdatum";
+            String currentEnd = "Enddatum";
+            exportStart.setText(currentStart);
+            exportEnd.setText(currentEnd);
+            exportStart.setOnClickListener(exportStartView -> {
+                MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+                MaterialDatePicker<Long> materialDatePicker = builder.build();
+                materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                    LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                    exportStart.setText(localDate.format(formatter));
+                });
+                materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
+            });
+            exportEnd.setOnClickListener(exportStartView -> {
+                MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+                MaterialDatePicker<Long> materialDatePicker = builder.build();
+                materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                    LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                    exportEnd.setText(localDate.format(formatter));
+                });
+                materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
+            });
+            String msg = "Möchten Sie die Stunden für diesen Kurs (" + course.getGroup() + ") exportieren?";
+            exportDialog.setView(dialogView)
+                    .setTitle("Exportieren")
+                    .setMessage(msg)
+                    .setNegativeButton("Abbrechen", (dialog, which)-> dialog.dismiss())
+                    .setPositiveButton("Exportieren", (dialog, which)-> {
+                        if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
+                        File file = new File(requireContext().getExternalFilesDir(null), "TUS_Stundenzettel.pdf");
+                        Log.d("FILE", file.getAbsolutePath());
+                        if(file.exists()) {
+                            Uri uri = Uri.fromFile(file);
+                            List<Pair<Course, LocalDate>> courseDateList = dataBaseHelper.getDates(course, Utilities.tryParseDate(exportStart.getText().toString()),
+                                    Utilities.tryParseDate(exportEnd.getText().toString()));
+                            FileHandler.export(uri, courseDateList, requireContext(), course.getGroup());
+                        }else {
+                            Toast.makeText(requireContext(), "Zettel nicht gefunden", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+            AlertDialog dialog = exportDialog.create();
+            dialog.show();
+        });
+
         if(highlightContent != null){
             highlightRow(highlightContent);
         }
