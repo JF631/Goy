@@ -4,11 +4,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.transition.Fade;
 import android.transition.TransitionInflater;
@@ -40,33 +40,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import com.itextpdf.forms.PdfAcroForm;
-import com.itextpdf.forms.fields.PdfFormField;
-import com.itextpdf.io.font.FontConstants;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -80,7 +67,7 @@ public class DepartmentFragment extends Fragment{
     private boolean copyFile = false;
     private Comparator<Pair<Course, LocalDate>> byDate, byCourse, byDuration;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
+    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness", "Alle"};
 
     public DepartmentFragment(){}
 
@@ -216,40 +203,75 @@ public class DepartmentFragment extends Fragment{
                         Toast.makeText(requireContext(), "Kopieren fehlgeschlagen", Toast.LENGTH_LONG).show();
                     }
                 }
-                export(uri, courseDateList, department);
+                FileHandler.export(uri, courseDateList, requireContext(), department);
             }
         });
 
         floatingActionButton.setOnClickListener(view1 -> {
-            String timePeriod = "Zeitraum: ";
-            if(!startDate.getText().equals("start"))
-                timePeriod += " vom " + startDate.getText();
-            if(!endDate.getText().equals("end"))
-                timePeriod += " bis " + endDate.getText();
-            if(startDate.getText().equals("start") && endDate.getText().equals("end"))
-                timePeriod += "gesamt";
-
-            String msg = "Möchten Sie die Stunden für die Abteilung " + department + " exportieren?\n" +
-                    timePeriod;
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Daten exportieren")
-                    .setMessage(msg)
-                    .setPositiveButton("Exportieren", (dialogInterface, i) -> {
+            MaterialAlertDialogBuilder exportDialog = new MaterialAlertDialogBuilder(requireContext());
+            LayoutInflater dialogInflater = requireActivity().getLayoutInflater();
+            String currentStart = start.get() == null ? "Startdatum"
+                    : start.get();
+            String currentEnd = end.get() == null ? "Enddatum"
+                    : end.get();
+            View exportView = dialogInflater.inflate(R.layout.export_course_list_view, null);
+            TextView exportStart = exportView.findViewById(R.id.export_start_date);
+            TextView exportEnd = exportView.findViewById(R.id.export_end_date);
+            TextView subtitle = exportView.findViewById(R.id.export_subtitle);
+            subtitle.setText("Möchten Sie die Stunden für die Abteilung " + department + " exportieren?");
+            MaterialSwitch exportAll = exportView.findViewById(R.id.export_all_groups);
+            exportAll.setOnCheckedChangeListener((compoundButton, checked) -> {
+                if(checked) {
+                    Pair<LocalDate, LocalDate> startEnd = dataBaseHelper.getMinMaxDate();
+                    subtitle.setText("Möchten Sie alle Stunden für folgenden Zeitraum exportieren?" + "\n" + "Bitte Zeitraum wählen:");
+                    exportStart.setText(startEnd.getFirst().toString());
+                    exportEnd.setText(startEnd.getSecond().toString());
+                }
+                else {
+                    subtitle.setText("Möchten Sie die Stunden für die Abteilung " + department + " exportieren?");
+                    exportStart.setText(currentStart);
+                    exportEnd.setText(currentEnd);
+                }
+            });
+            exportStart.setText(currentStart);
+            exportEnd.setText(currentEnd);
+            exportStart.setOnClickListener(exportStartView -> {
+                MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+                MaterialDatePicker<Long> materialDatePicker = builder.build();
+                materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                    LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                    exportStart.setText(localDate.format(formatter));
+                });
+                materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
+            });
+            exportEnd.setOnClickListener(exportStartView -> {
+                MaterialDatePicker.Builder<Long> builder = MaterialDatePicker.Builder.datePicker();
+                MaterialDatePicker<Long> materialDatePicker = builder.build();
+                materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
+                    LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
+                    exportEnd.setText(localDate.format(formatter));
+                });
+                materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
+            });
+            exportDialog.setView(exportView)
+                    .setTitle("Exportieren")
+                    .setNegativeButton("Abbrechen", (dialog, which)-> dialog.dismiss())
+                    .setPositiveButton("Exportieren", (dialog, which)-> {
                         if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
                         File file = new File(requireContext().getExternalFilesDir(null), "TUS_Stundenzettel.pdf");
                         Log.d("FILE", file.getAbsolutePath());
-
-                        if(file.exists()){
+                        if(file.exists()) {
                             Uri uri = Uri.fromFile(file);
-                            export(uri, courseDateList, department);
-                        }else {
+                            List<Pair<Course, LocalDate>> dateList;
+                            dateList = dataBaseHelper.getDates(department, Objects.requireNonNull(Utilities.tryParseDate(exportStart.getText().toString())),
+                                        Utilities.tryParseDate(exportEnd.getText().toString()));
+                            FileHandler.export(uri, dateList, requireContext(), department);
+                        }else{
                             selectDocument();
                         }
-                    })
-                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
-
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
+                    });
+            AlertDialog dialog = exportDialog.create();
+            dialog.show();
         });
 
 
@@ -298,59 +320,6 @@ public class DepartmentFragment extends Fragment{
         }
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void export(Uri uri, List<Pair<Course,LocalDate>> courseLocalDateList, String department) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyMMdd");
-        double sumDuration = 0;
-        for(Pair<Course, LocalDate> cl : courseLocalDateList){
-            sumDuration += Double.parseDouble(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
-        }
-        SharedPreferences sharedPreferences  = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-        String name = decryptString(sharedPreferences.getString("name", ""));
-        String surname = decryptString(sharedPreferences.getString("surname", ""));
-        String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department + ".pdf";
-        int size = courseLocalDateList.size();
-        if (size > 43) {
-            Toast.makeText(getContext(), "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        File[] downloadDirs = requireContext().getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
-        String downloadDir = downloadDirs[0].getAbsolutePath();
-
-        File pdfFile = new File(downloadDir, docName);
-        AtomicBoolean overwrite = new AtomicBoolean(true);
-
-        if(pdfFile.exists()){
-            double finalSumDuration = sumDuration;
-            MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Datei existiert bereits")
-                    .setMessage("Möchten Sie die Datei überschreiben?")
-                    .setCancelable(false)
-                    .setPositiveButton("überschreiben", (dialogInterface, i) -> {
-                        dialogInterface.dismiss();
-                        try {
-                            writeToPdf(pdfFile, uri, courseLocalDateList, finalSumDuration, size);
-                        } catch (IOException e) {
-                            Toast.makeText(requireContext(), "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
-                            Log.e("Export error: ", e.toString());
-                        }
-                    })
-                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                        dialogInterface.dismiss();
-                        overwrite.set(false);
-                    });
-            AlertDialog dialog = alertBuilder.create();
-            dialog.show();
-        }else {
-            try {
-                writeToPdf(pdfFile, uri, courseLocalDateList, sumDuration, size);
-            } catch (IOException e) {
-                Toast.makeText(requireContext(), "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
     private double getCurrentDurationSum(List<Pair<Course, LocalDate>> courseDateList) {
         return courseDateList.stream()
                 .mapToDouble(pair -> {
@@ -366,64 +335,6 @@ public class DepartmentFragment extends Fragment{
     private void showCreate(){
         CreatePersonFragment createPersonFragment = new CreatePersonFragment();
         createPersonFragment.show(getChildFragmentManager(), "create_person");
-    }
-
-    private void writeToPdf(File pdfFile, Uri uri, List<Pair<Course, LocalDate>> courseLocalDateList, double sumDuration, int size) throws IOException {
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
-        InputStream inputStream;
-        try {
-             inputStream = requireContext().getContentResolver().openInputStream(uri);
-        }catch (FileNotFoundException e){
-            Toast.makeText(requireContext(), "Datei (blanko Stundenzettel) konnte nicht geöffnet werden", Toast.LENGTH_LONG).show();
-            return;
-        }
-        PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputStream), new PdfWriter(pdfFile));
-        PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
-        Map<String, PdfFormField> fields = form.getFormFields();
-
-        PdfFont font = PdfFontFactory.createFont(FontConstants.HELVETICA);
-
-        for (Map.Entry<String, PdfFormField> entry : fields.entrySet()) {
-            PdfFormField field = entry.getValue();
-            field.setFont(font);
-            field.setFontSize(10f); // Set the font size to 12
-        }
-
-        String name = sharedPreferences.getString("name","").isEmpty() ? "" : decryptString(sharedPreferences.getString("name",""));
-        String surname = sharedPreferences.getString("surname", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("surname", ""));
-        String iban = sharedPreferences.getString("iban", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("iban", ""));
-        String bic = sharedPreferences.getString("bic", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bic", ""));
-        String bank = sharedPreferences.getString("bank", "").isEmpty() ? "" : decryptString(sharedPreferences.getString("bank", ""));
-
-        Objects.requireNonNull(fields.get("date")).setValue(LocalDate.now().format(dateTimeFormatter));
-        Objects.requireNonNull(fields.get("prename")).setValue(name);
-        Objects.requireNonNull(fields.get("name")).setValue(surname);
-        Objects.requireNonNull(fields.get("iban")).setValue(iban);
-        Objects.requireNonNull(fields.get("bic")).setValue(bic);
-        Objects.requireNonNull(fields.get("bank")).setValue(bank);
-        Objects.requireNonNull(fields.get("department")).setValue(department);
-        Objects.requireNonNull(fields.get("sum")).setValue(decimalFormat.format(sumDuration));
-
-        int d = 0;
-        String dateKey, durationKey;
-        for (int i = 0; i < size; ++i) {
-            if (i % 22 == 0 && i != 0) d = 1;
-            dateKey = "dt1." + (i % 22) + "." + d;
-            durationKey = "du1." + (i % 22) + "." + d;
-            if (fields.containsKey(dateKey) && fields.containsKey(durationKey)) {
-                Log.d("TEST", "save");
-                LocalDate localDate = courseLocalDateList.get(i).getSecond();
-                String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
-                Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(dateTimeFormatter));
-                Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
-            }
-        }
-        pdfDoc.close();
-        Snackbar.make(requireActivity().findViewById(android.R.id.content), "Stundenzettel erstellt", Snackbar.LENGTH_LONG)
-                .setAction("Anzeigen", view -> showPdf(pdfFile))
-                .show();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -493,16 +404,6 @@ public class DepartmentFragment extends Fragment{
                 Toast.makeText(requireContext(), "Keine App zum öffnnen von Pdf Dateien gefunden", Toast.LENGTH_LONG).show();
             }
 
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private String decryptString(String toDecrypt){
-        try {
-            return Utilities.decryptToString(toDecrypt);
-        } catch (Exception e) {
-            Log.e("Create Person", String.valueOf(e));
-            return toDecrypt;
         }
     }
 }
