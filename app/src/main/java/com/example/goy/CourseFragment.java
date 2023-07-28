@@ -27,6 +27,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
 import java.time.Instant;
@@ -70,7 +72,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         course = requireArguments().getParcelable("course");
         DataBaseHelper dataBaseHelper = new DataBaseHelper(requireContext());
-        List<LocalDate> dateList = dataBaseHelper.getDates(course, true);
+        List<LocalDate> dateList = dataBaseHelper.getDates(course, true, null, null);
         View view = inflater.inflate(R.layout.expanded_course, container, false);
         setUpView(view, course);
         ImageView imageView = view.findViewById(R.id.expanded_edit);
@@ -120,12 +122,22 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
 
         imageView.setOnClickListener(view1 -> showCreate());
         exportView.setOnClickListener(view2 -> {
+            String msg = "Möchten Sie die Stunden für diesen Kurs (" + course.getGroup() + ") exportieren?";
             SharedPreferences sharedPreferences = requireContext().getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
             MaterialAlertDialogBuilder exportDialog = new MaterialAlertDialogBuilder(requireContext());
             LayoutInflater dialogInflater = requireActivity().getLayoutInflater();
             View dialogView = dialogInflater.inflate(R.layout.export_course_list_view, null);
             TextView exportStart = dialogView.findViewById(R.id.export_start_date);
             TextView exportEnd = dialogView.findViewById(R.id.export_end_date);
+            TextView subtitle = dialogView.findViewById(R.id.export_subtitle);
+            subtitle.setText(msg);
+            MaterialSwitch exportAll = dialogView.findViewById(R.id.export_all_groups);
+            exportAll.setOnClickListener(view12 -> {
+                Snackbar.make(requireActivity().findViewById(android.R.id.content), "Diese Funktion ist nur auf der Übersichtseite verfügbar", Snackbar.LENGTH_LONG)
+                        .show();
+                exportAll.setChecked(false);
+            });
+            exportAll.setAlpha(0.23F);
             String currentStart = "Startdatum";
             String currentEnd = "Enddatum";
             exportStart.setText(currentStart);
@@ -148,10 +160,8 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
                 });
                 materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
             });
-            String msg = "Möchten Sie die Stunden für diesen Kurs (" + course.getGroup() + ") exportieren?";
             exportDialog.setView(dialogView)
                     .setTitle("Exportieren")
-                    .setMessage(msg)
                     .setNegativeButton("Abbrechen", (dialog, which)-> dialog.dismiss())
                     .setPositiveButton("Exportieren", (dialog, which)-> {
                         if(sharedPreferences.getString("name", "").isEmpty()) showCreate();

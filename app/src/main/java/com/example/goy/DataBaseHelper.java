@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -139,6 +140,24 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         setLocations(courses);
         return courses;
     }
+
+    private List<Course> getIncompleteCourses() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Course> courses = new ArrayList<>();
+        String[] projection = {"id", "group_name"};
+
+        Cursor idCursor = db.query("courses", projection, null, null, null, null, null);
+        while (idCursor.moveToNext()) {
+            int id = idCursor.getInt(idCursor.getColumnIndexOrThrow("id"));
+            String group = idCursor.getString(idCursor.getColumnIndexOrThrow("group_name"));
+            Course course = new Course(null, group, id); // Here, department is set to null since we are retrieving all courses.
+            courses.add(course);
+        }
+        idCursor.close();
+        db.close(); // Close the database after use.
+        return courses;
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<DayOfWeek> getAllWeekdays(){
@@ -266,15 +285,26 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(Course course, boolean desc){
+    public List<LocalDate> getDates(Course course, boolean desc, @Nullable LocalDate start, @Nullable LocalDate end){
         SQLiteDatabase db = this.getReadableDatabase();
         List<LocalDate> rtrn = new ArrayList<>();
         String[] projection = {"date"};
         String selection = "courseId = ?";
-        String[] args = {course.getStringId()};
+        List<String> args = new ArrayList<>();
+        args.add(0, course.getStringId());
         String orderBy = "date " + (desc ? "DESC" : "ASC");
 
-        Cursor cursor = db.query("course_date", projection, selection, args, null, null, orderBy);
+        if(start != null){
+            selection += " AND date >= ?";
+            args.add(start.format(formatter));
+        }
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+            Log.d("args: ", args.toString());
+        }
+
+        Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, orderBy);
 
         while (cursor.moveToNext()){
             String dateString = cursor.getString(cursor.getColumnIndexOrThrow("date"));
@@ -286,6 +316,36 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 
         return rtrn;
     }
+
+    Pair<LocalDate, LocalDate> getMinMaxDate() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Pair<LocalDate, LocalDate> rtrn = new Pair<>(null, null);
+        String[] projection = {
+                "MIN(date) as min_date",
+                "MAX(date) as max_date"
+        };
+        Cursor cursor = db.query(
+                "course_date",
+                projection,
+                "date IS NOT NULL",
+                null,
+                null,
+                null,
+                null
+        );
+
+        if (cursor.moveToFirst()) {
+            LocalDate minDate = Utilities.tryParseDate(cursor.getString(cursor.getColumnIndexOrThrow("min_date")));
+            LocalDate maxDate = Utilities.tryParseDate(cursor.getString(cursor.getColumnIndexOrThrow("max_date")));
+
+            rtrn = new Pair<>(minDate, maxDate);
+        }
+
+        cursor.close();
+        db.close();
+        return rtrn;
+    }
+
 
     private List<Course> getCourses(String department){
         SQLiteDatabase db = this.getReadableDatabase();
@@ -305,35 +365,6 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return courses;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<Pair<Course, LocalDate>> getDates(@NonNull LocalDate start, @Nullable LocalDate end){
-        SQLiteDatabase db = this.getReadableDatabase();
-        List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
-        List<Course> courses = getCourses();
-        String[] projection = {"date"};
-        String selection = "date >= ?";
-        List<String> args = new ArrayList<>();
-        args.add(start.format(formatter));
-        if (end != null){
-            selection += " AND date <= ?";
-            args.add(end.format(formatter));
-        }
-
-        for(Course course : courses){
-            args.add(0, course.getStringId());
-            Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
-            while (cursor.moveToNext()){
-                String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
-                LocalDate cDate = LocalDate.parse(courseDate, formatter);
-                Pair<Course, LocalDate> courseDatePair = new Pair<>(course, cDate);
-                rtrn.add(courseDatePair);
-            }
-            cursor.close();
-            args.remove(0);
-        }
-        db.close();
-        return rtrn;
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Pair<Course, LocalDate>> getDates(@NonNull Course course, @Nullable LocalDate start, @Nullable LocalDate end){
@@ -366,10 +397,29 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<Course, LocalDate>> getDates(@Nullable LocalDate start, @Nullable LocalDate end){
+        List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
+        List<Course> courses = getCourses();
+
+        for(Course course : courses){
+            List<Pair<Course, LocalDate>> currentDateList = getDates(course, start, end);
+            rtrn.addAll(currentDateList);
+        }
+        return rtrn;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Pair<Course, LocalDate>> getDates(@NonNull String department, @Nullable LocalDate start, @Nullable LocalDate end){
         SQLiteDatabase db = this.getReadableDatabase();
         List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
-        List<Course> courses = getCourses(department);
+        List<Course> courses;
+        if(department.equals("Alle")) {
+            return getDates(start, end);
+        }
+        else {
+            courses = getCourses(department);
+        }
+        Log.e("start courses: ", courses.toString());
         String[] projection = {"date"};
         String selection = "courseId = ?";
         List<String> args = new ArrayList<>();
@@ -384,6 +434,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         }
         for(Course course : courses){
             args.add(0, course.getStringId());
+            Log.d("args: ", args.toString());
             Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
             while (cursor.moveToNext()){
                 String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));

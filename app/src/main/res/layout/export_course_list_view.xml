@@ -20,8 +20,19 @@
         android:layout_height="wrap_content"
         android:textStyle="italic"
         android:layout_below="@+id/export_title"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
         android:paddingTop="5dp"
         />
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/export_all_groups"
+        android:layout_below="@+id/export_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:text="Alle Stunden exportieren"/>
 
     <TextView
         android:id="@+id/export_start_date"
@@ -32,7 +43,7 @@
         android:textStyle="italic"
         android:paddingStart="5dp"
         android:paddingEnd="5dp"
-        android:layout_below="@+id/export_subtitle"
+        android:layout_below="@+id/export_all_groups"
         app:drawableLeftCompat="@drawable/ic_date" />
     <TextView
         android:id="@+id/export_end_date"

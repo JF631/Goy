@@ -4,11 +4,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.transition.Fade;
 import android.transition.TransitionInflater;
@@ -40,35 +40,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import com.itextpdf.forms.PdfAcroForm;
-import com.itextpdf.forms.fields.PdfFormField;
-import com.itextpdf.io.font.constants.StandardFonts;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.font.FontSelector;
-
-import org.slf4j.helpers.Util;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -82,7 +67,7 @@ public class DepartmentFragment extends Fragment{
     private boolean copyFile = false;
     private Comparator<Pair<Course, LocalDate>> byDate, byCourse, byDuration;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness"};
+    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness", "Alle"};
 
     public DepartmentFragment(){}
 
@@ -225,13 +210,29 @@ public class DepartmentFragment extends Fragment{
         floatingActionButton.setOnClickListener(view1 -> {
             MaterialAlertDialogBuilder exportDialog = new MaterialAlertDialogBuilder(requireContext());
             LayoutInflater dialogInflater = requireActivity().getLayoutInflater();
-            View exportView = dialogInflater.inflate(R.layout.export_course_list_view, null);
-            TextView exportStart = exportView.findViewById(R.id.export_start_date);
-            TextView exportEnd = exportView.findViewById(R.id.export_end_date);
             String currentStart = start.get() == null ? "Startdatum"
                     : start.get();
             String currentEnd = end.get() == null ? "Enddatum"
                     : end.get();
+            View exportView = dialogInflater.inflate(R.layout.export_course_list_view, null);
+            TextView exportStart = exportView.findViewById(R.id.export_start_date);
+            TextView exportEnd = exportView.findViewById(R.id.export_end_date);
+            TextView subtitle = exportView.findViewById(R.id.export_subtitle);
+            subtitle.setText("Möchten Sie die Stunden für die Abteilung " + department + " exportieren?");
+            MaterialSwitch exportAll = exportView.findViewById(R.id.export_all_groups);
+            exportAll.setOnCheckedChangeListener((compoundButton, checked) -> {
+                if(checked) {
+                    Pair<LocalDate, LocalDate> startEnd = dataBaseHelper.getMinMaxDate();
+                    subtitle.setText("Möchten Sie alle Stunden für folgenden Zeitraum exportieren?" + "\n" + "Bitte Zeitraum wählen:");
+                    exportStart.setText(startEnd.getFirst().toString());
+                    exportEnd.setText(startEnd.getSecond().toString());
+                }
+                else {
+                    subtitle.setText("Möchten Sie die Stunden für die Abteilung " + department + " exportieren?");
+                    exportStart.setText(currentStart);
+                    exportEnd.setText(currentEnd);
+                }
+            });
             exportStart.setText(currentStart);
             exportEnd.setText(currentEnd);
             exportStart.setOnClickListener(exportStartView -> {
@@ -252,10 +253,8 @@ public class DepartmentFragment extends Fragment{
                 });
                 materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
             });
-            String msg = "Möchten Sie die Stunden für die Abteilung " + department + " exportieren?";
             exportDialog.setView(exportView)
                     .setTitle("Exportieren")
-                    .setMessage(msg)
                     .setNegativeButton("Abbrechen", (dialog, which)-> dialog.dismiss())
                     .setPositiveButton("Exportieren", (dialog, which)-> {
                         if(sharedPreferences.getString("name", "").isEmpty()) showCreate();
@@ -263,8 +262,9 @@ public class DepartmentFragment extends Fragment{
                         Log.d("FILE", file.getAbsolutePath());
                         if(file.exists()) {
                             Uri uri = Uri.fromFile(file);
-                            List<Pair<Course, LocalDate>> dateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(exportStart.getText().toString()),
-                                    Utilities.tryParseDate(exportEnd.getText().toString()));
+                            List<Pair<Course, LocalDate>> dateList;
+                            dateList = dataBaseHelper.getDates(department, Objects.requireNonNull(Utilities.tryParseDate(exportStart.getText().toString())),
+                                        Utilities.tryParseDate(exportEnd.getText().toString()));
                             FileHandler.export(uri, dateList, requireContext(), department);
                         }else{
                             selectDocument();
