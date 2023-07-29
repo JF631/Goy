@@ -189,7 +189,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
     }
 
     private double getTimeSum(List<LocalDate> dateList){
-        return FileHandler.getCurrentDurationSum(new DataBaseHelper(requireContext()), dateList, course);
+        return course.getTotalTime(requireContext());
 
     }
 

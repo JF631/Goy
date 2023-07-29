@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,55 +43,63 @@ public class FileHandler {
                               Context ctx, String department){
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyMMdd");
-
-        double sumDuration = 0;
-        for(Pair<Course, LocalDate> cl : courseDateList){
-            sumDuration += Double.parseDouble(dataBaseHelper.getDuration(cl.getFirst(), cl.getSecond().getDayOfWeek()));
-        }
         SharedPreferences sharedPreferences  = ctx.getSharedPreferences("GoyPrefs", Context.MODE_PRIVATE);
         String name = decryptString(sharedPreferences.getString("name", ""));
         String surname = decryptString(sharedPreferences.getString("surname", ""));
-        String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department + ".pdf";
+        String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department;
         int size = courseDateList.size();
-        if (size > 43) {
+        int maxSize = 43;
+        int requiredFiles = (int) Math.ceil((float)size / maxSize);
+        if (size > requiredFiles * maxSize) {
             Toast.makeText(ctx, "Bitte kleineren Zeitraum auswählen!", Toast.LENGTH_SHORT).show();
             return;
         }
+
         File[] downloadDirs = ctx.getExternalFilesDirs(Environment.DIRECTORY_DOWNLOADS);
         String downloadDir = downloadDirs[0].getAbsolutePath();
-
-        File pdfFile = new File(downloadDir, docName);
-        AtomicBoolean overwrite = new AtomicBoolean(true);
-
-        if(pdfFile.exists()){
-            double finalSumDuration = sumDuration;
-            MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
-                    .setTitle("Datei existiert bereits")
-                    .setMessage("Möchten Sie die Datei überschreiben?")
-                    .setCancelable(false)
-                    .setPositiveButton("überschreiben", (dialogInterface, i) -> {
-                        dialogInterface.dismiss();
-                        try {
-                            writeToPdf(pdfFile, uri, courseDateList, finalSumDuration, size,
-                                    ctx, department);
-                        } catch (IOException e) {
-                            Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
-                            Log.e("Export error: ", e.toString());
-                        }
-                    })
-                    .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                        dialogInterface.dismiss();
-                        overwrite.set(false);
-                    });
-            AlertDialog dialog = alertBuilder.create();
-            dialog.show();
-        } else {
-            try {
-                writeToPdf(pdfFile, uri, courseDateList, sumDuration, size,
-                        ctx, department);
-            } catch (IOException e) {
-                Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
+        List<File> fileList = new ArrayList<>();
+        for(int i = 0; i<requiredFiles; i++){
+            if(i>0)
+                docName += "_" + i;
+            docName += ".pdf";
+            fileList.add(i, new File(downloadDir, docName));
+        }
+        List<Pair<Course, LocalDate>> currentList;
+        int offset = 0;
+        for(File currentFile : fileList){
+            int length = Math.min(size - offset, maxSize);
+            currentList = courseDateList.subList(offset, offset + length);
+            double finalSumDuration = FileHandler.getCurrentDurationSum(dataBaseHelper, currentList);
+            if(currentFile.exists()){
+                List<Pair<Course, LocalDate>> finalCurrentList = currentList;
+                MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
+                        .setTitle("Datei existiert bereits")
+                        .setMessage("Möchtest du die Datei " + currentFile.getName() + " überschreiben?")
+                        .setCancelable(false)
+                        .setPositiveButton("überschreiben", (dialogInterface, index) -> {
+                            dialogInterface.dismiss();
+                            try {
+                                writeToPdf(currentFile, uri, finalCurrentList, finalSumDuration, finalCurrentList.size(),
+                                        ctx, department);
+                            } catch (IOException e) {
+                                Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
+                                Log.e("Export error: ", e.toString());
+                            }
+                        })
+                        .setNegativeButton("Abbrechen", (dialogInterface, index) -> {
+                            dialogInterface.dismiss();
+                        });
+                AlertDialog dialog = alertBuilder.create();
+                dialog.show();
+            } else {
+                try {
+                    writeToPdf(currentFile, uri, currentList, finalSumDuration, currentList.size(),
+                            ctx, department);
+                } catch (IOException e) {
+                    Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
+                }
             }
+            offset += maxSize;
         }
     }
 

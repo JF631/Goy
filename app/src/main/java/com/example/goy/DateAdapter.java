@@ -134,7 +134,7 @@ public class DateAdapter extends BaseAdapter {
                         notifyItemRemoved(pos);
                         String msg = "Kurs: " + course.getGroup() +
                                 "\nBisher gehaltene Stundenzahl: " +
-                                FileHandler.getCurrentDurationSum(dataBaseHelper, dateList, course) +
+                                course.getTotalTime(ctx) +
                                 "\nTermine: \n";
                         updateTitle(msg);
                         rtrn.set(true);

@@ -20,9 +20,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CourseAdapter extends BaseAdapter {
 
     private final List<Course> courseList;
+    private final Context ctx;
 
-    public CourseAdapter(List<Course> courseList){
+    public CourseAdapter(List<Course> courseList, Context ctx){
         this.courseList = courseList;
+        this.ctx = ctx;
     }
 
     public interface OnItemClickListener{
@@ -69,12 +71,17 @@ public class CourseAdapter extends BaseAdapter {
         return viewHolder;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ViewHolder viewHolder = (ViewHolder) holder;
+        String courseDays = "Kurstage: ",
+                courseLocation = "Kursorte: ",
+                courseTimes = "Bisher gehalten: ";
         viewHolder.courseTitle.setText(courseList.get(position).getGroup());
-        viewHolder.courseDays.setText(courseList.get(position).getDaysFlattened());
-        viewHolder.courseLocation.setText(courseList.get(position).getLocationsFlattened());
+        viewHolder.courseDays.setText(courseDays + courseList.get(position).getDaysFlattened());
+        viewHolder.courseLocation.setText(courseLocation + courseList.get(position).getLocationsFlattened());
+        viewHolder.courseTimes.setText(courseTimes + courseList.get(position).getStringNumberOfHeldTimes(ctx));
     }
 
     @Override
@@ -117,13 +124,14 @@ public class CourseAdapter extends BaseAdapter {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        TextView courseTitle, courseDays, courseLocation;
+        TextView courseTitle, courseDays, courseLocation, courseTimes;
 
         public ViewHolder(@NonNull View itemView){
             super(itemView);
             courseTitle = itemView.findViewById(R.id.course_title);
             courseDays = itemView.findViewById(R.id.course_days);
             courseLocation = itemView.findViewById(R.id.course_location);
+            courseTimes = itemView.findViewById(R.id.course_times);
         }
     }
 }

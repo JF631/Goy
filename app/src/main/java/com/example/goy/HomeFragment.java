@@ -48,7 +48,7 @@ public class HomeFragment extends Fragment implements CreateFragment.OnCreateCou
 
         DataBaseHelper dataBaseHelper = new DataBaseHelper(getContext());
         List<Course> courseList = dataBaseHelper.getCourses();
-        courseAdapter = new CourseAdapter(courseList);
+        courseAdapter = new CourseAdapter(courseList, requireContext());
         homeView.setLayoutManager(new LinearLayoutManager(getContext()));
         homeView.setAdapter(courseAdapter);
 

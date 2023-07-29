@@ -43,8 +43,16 @@
             android:textStyle="normal"
             android:textSize="12sp"
             android:gravity="start"
-            android:layout_below="@+id/course_days"
-            android:text="test"/>
+            android:layout_below="@+id/course_days"/>
+
+        <TextView
+            android:id="@+id/course_times"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="normal"
+            android:textSize="12sp"
+            android:gravity="start"
+            android:layout_below="@+id/course_location"/>
 
     </RelativeLayout>
 

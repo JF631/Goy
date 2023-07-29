@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -147,6 +148,24 @@ public class Course implements Parcelable {
         dbHelper.close();
         return dateList;
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public double getTotalTime(Context ctx){
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
+        List<LocalDate> dateList = getDates(ctx);
+        dataBaseHelper.close();
+        return FileHandler.getCurrentDurationSum(dataBaseHelper, dateList, this);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public String getStringNumberOfHeldTimes(Context ctx){
+        return String.valueOf(getNumberOfHeldTimes(ctx));
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public int getNumberOfHeldTimes(Context ctx){
+        return getDates(ctx).size();
+    }
+
 
     @NonNull
     public String toString(){
