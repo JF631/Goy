@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public abstract class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    public abstract void deleteItem(int pos, Context ctx);
+    public abstract boolean deleteItem(int pos, Context ctx);
 
     public interface OnItemClickListener {
         void onItemClick(int position, View sharedView);

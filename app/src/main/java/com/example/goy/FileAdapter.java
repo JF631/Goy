@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileAdapter extends BaseAdapter{
     private ArrayList<File> files;
@@ -48,8 +49,9 @@ public class FileAdapter extends BaseAdapter{
         this.onItemLongClickListener = onItemLongClickListener;
     }
     @Override
-    public void deleteItem(int pos, Context ctx) {
+    public boolean deleteItem(int pos, Context ctx) {
         File file = files.get(pos);
+        AtomicBoolean rtrn = new AtomicBoolean(false);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Datei löschen")
                 .setMessage("Möchtest du die Datei '" + file.getName() + "' wirklich löschen?")
@@ -59,6 +61,7 @@ public class FileAdapter extends BaseAdapter{
                     }else {
                         files.remove(pos);
                         notifyItemRemoved(pos);
+                        rtrn.set(true);
                     }
                 })
                 .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
@@ -68,6 +71,7 @@ public class FileAdapter extends BaseAdapter{
 
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+        return rtrn.get();
     }
 
     public void updateItem(File file, File newFile){

@@ -1,6 +1,5 @@
 package com.example.goy;
 
-import static androidx.core.content.ContentProviderCompat.requireContext;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 public class FileHandler {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -93,6 +92,38 @@ public class FileHandler {
                 Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static double getCurrentDurationSum(DataBaseHelper dataBaseHelper, List<LocalDate> dates, Course course){
+        return dates.stream()
+                .mapToDouble(date -> {
+                    try{
+                        return Double.parseDouble(dataBaseHelper.getDuration(course, date.getDayOfWeek()));
+                    }catch (NumberFormatException e){
+                        return 0.0;
+                    }
+                })
+                .sum();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static double getCurrentDurationSum(DataBaseHelper dataBaseHelper, List<Pair<Course, LocalDate>> courseDateList) {
+        return courseDateList.stream()
+                .mapToDouble(pair -> {
+                    try {
+                        return Double.parseDouble(dataBaseHelper.getDuration(pair.getFirst(), pair.getSecond().getDayOfWeek()));
+                    } catch (NumberFormatException e) {
+                        return 0.0;
+                    }
+                })
+                .sum();
+    }
+
+    public static void showSnackbar(View rootView, String message) {
+        Snackbar snackbar = Snackbar.make(rootView, message, Snackbar.LENGTH_LONG);
+        snackbar.setAction("Dismiss", v -> snackbar.dismiss());
+        snackbar.show();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -170,3 +201,4 @@ public class FileHandler {
         pdfDoc.close();
     }
 }
+

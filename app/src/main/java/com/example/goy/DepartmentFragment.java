@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -48,12 +47,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -76,7 +73,7 @@ public class DepartmentFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.department_date_view, container, false);
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, departments);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);
         TextView startDate = view.findViewById(R.id.department_start_date);
@@ -105,7 +102,7 @@ public class DepartmentFragment extends Fragment{
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
         dateView.setAdapter(departmentAdapter);
 
-        durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
+        durationSort.setText("duration\n(\u2211" + FileHandler.getCurrentDurationSum(dataBaseHelper, courseDateList) + ")");
 
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(departmentAdapter, requireContext());
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeToDeleteCallback);
@@ -123,7 +120,7 @@ public class DepartmentFragment extends Fragment{
                 startDate.setText(start.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate ,isDesc[0]);
-                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + FileHandler.getCurrentDurationSum(dataBaseHelper, courseDateList) + ")");
             });
 
             materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
@@ -139,7 +136,7 @@ public class DepartmentFragment extends Fragment{
                 endDate.setText(end.toString());
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate ,isDesc[0]);
-                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + FileHandler.getCurrentDurationSum(dataBaseHelper, courseDateList) + ")");
             });
 
             materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
@@ -263,9 +260,12 @@ public class DepartmentFragment extends Fragment{
                         if(file.exists()) {
                             Uri uri = Uri.fromFile(file);
                             List<Pair<Course, LocalDate>> dateList;
-                            dateList = dataBaseHelper.getDates(department, Objects.requireNonNull(Utilities.tryParseDate(exportStart.getText().toString())),
+                            String tmpDepartment = department;
+                            if(exportAll.isChecked())
+                                tmpDepartment = "Alle";
+                            dateList = dataBaseHelper.getDates(tmpDepartment, Utilities.tryParseDate(exportStart.getText().toString()),
                                         Utilities.tryParseDate(exportEnd.getText().toString()));
-                            FileHandler.export(uri, dateList, requireContext(), department);
+                            FileHandler.export(uri, dateList, requireContext(), tmpDepartment);
                         }else{
                             selectDocument();
                         }
@@ -281,7 +281,7 @@ public class DepartmentFragment extends Fragment{
                 department = adapterView.getItemAtPosition(i).toString();
                 courseDateList = dataBaseHelper.getDates(department, Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
                 updateList(courseDateList, byDate, isDesc[0]);
-                durationSort.setText("duration\n(\u2211" + getCurrentDurationSum(courseDateList) + ")");
+                durationSort.setText("duration\n(\u2211" + FileHandler.getCurrentDurationSum(dataBaseHelper, courseDateList) + ")");
             }
 
             @Override
@@ -314,22 +314,10 @@ public class DepartmentFragment extends Fragment{
         return view;
     }
 
-    private void copyFile(Uri source, File target) throws Exception{
+    private void copyFile(Uri source, File target) throws Exception {
         try (InputStream inputStream = requireContext().getContentResolver().openInputStream(source)) {
             Files.copy(inputStream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-    }
-
-    private double getCurrentDurationSum(List<Pair<Course, LocalDate>> courseDateList) {
-        return courseDateList.stream()
-                .mapToDouble(pair -> {
-                    try {
-                        return Double.parseDouble(dataBaseHelper.getDuration(pair.getFirst(), pair.getSecond().getDayOfWeek()));
-                    } catch (NumberFormatException e) {
-                        return 0.0;
-                    }
-                })
-                .sum();
     }
 
     private void showCreate(){

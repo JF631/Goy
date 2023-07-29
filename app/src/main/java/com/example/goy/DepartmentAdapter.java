@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class DepartmentAdapter extends BaseAdapter{
@@ -105,9 +106,10 @@ public class DepartmentAdapter extends BaseAdapter{
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void deleteItem(int pos, Context ctx){
+    public boolean deleteItem(int pos, Context ctx){
         LocalDate date = courseList.get(pos).getSecond();
         String course = courseList.get(pos).getFirst().getGroup();
+        AtomicBoolean rtrn = new AtomicBoolean(false);
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Datum löschen?")
@@ -119,6 +121,7 @@ public class DepartmentAdapter extends BaseAdapter{
                     }else {
                         courseList.remove(pos);
                         notifyItemRemoved(pos);
+                        rtrn.set(true);
                     }
                     dialogInterface.dismiss();
 
@@ -129,6 +132,7 @@ public class DepartmentAdapter extends BaseAdapter{
                 });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
+        return rtrn.get();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{

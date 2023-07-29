@@ -79,7 +79,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         ImageView exportView = view.findViewById(R.id.expaned_export);
         dateView = view.findViewById(R.id.show_course_dates);
         dateView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        dateAdapter = new DateAdapter(dateList, course);
+        dateAdapter = new DateAdapter(dateList, course, listTitleView);
         dateView.setAdapter(dateAdapter);
 
         SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(dateAdapter, requireContext());
@@ -104,12 +104,17 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
             materialDatePicker.addOnPositiveButtonClickListener(selectedDate -> {
                 LocalDate localDate = Instant.ofEpochMilli(selectedDate).atZone(ZoneId.systemDefault()).toLocalDate();
 
-                if(!courseDays.contains(localDate.getDayOfWeek().toString()))
+                if(!courseDays.contains(localDate.getDayOfWeek().toString())) {
+                    Snackbar snackbar = Snackbar.make(view, "Wochentag nicht verfügbar", Snackbar.LENGTH_LONG);
+                    snackbar.setAction("Dismiss", v -> snackbar.dismiss());
+                    snackbar.show();
                     return;
+                }
 
                 if(dataBaseHelper.insertDate(course, localDate))
                     dateAdapter.insertItem(localDate);
-                else Toast.makeText(requireContext(), "Datum bereits in Liste", Toast.LENGTH_SHORT).show();
+                else
+                    Toast.makeText(requireContext(), "Datum bereits in Liste", Toast.LENGTH_SHORT).show();
             });
 
             materialDatePicker.show(requireActivity().getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
@@ -117,9 +122,6 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         });
 
         dateAdapter.setOnItemLongClickListener(pos -> dateAdapter.deleteItem(pos, getContext()));
-
-
-
         imageView.setOnClickListener(view1 -> showCreate());
         exportView.setOnClickListener(view2 -> {
             String msg = "Möchten Sie die Stunden für diesen Kurs (" + course.getGroup() + ") exportieren?";
@@ -132,7 +134,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
             TextView subtitle = dialogView.findViewById(R.id.export_subtitle);
             subtitle.setText(msg);
             MaterialSwitch exportAll = dialogView.findViewById(R.id.export_all_groups);
-            exportAll.setOnClickListener(view12 -> {
+            exportAll.setOnCheckedChangeListener((view12, checked)->{
                 Snackbar.make(requireActivity().findViewById(android.R.id.content), "Diese Funktion ist nur auf der Übersichtseite verfügbar", Snackbar.LENGTH_LONG)
                         .show();
                 exportAll.setChecked(false);
@@ -186,7 +188,11 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         return view;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    private double getTimeSum(List<LocalDate> dateList){
+        return FileHandler.getCurrentDurationSum(new DataBaseHelper(requireContext()), dateList, course);
+
+    }
+
     private void setUpView(View view, Course course){
         courseGroup = view.findViewById(R.id.expanded_course_title);
         courseTimes = view.findViewById(R.id.expand_course_days);
@@ -209,7 +215,10 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         setCourseTimes(times);
         setCourseLocations(locations);
         setCourseDepartment(department);
-        setListViewTitle(course.getGroup() + " wurde an folgenden Terminen gehalten: \n");
+        setListViewTitle("Kurs: " + course.getGroup() +
+                "\nBisher gehaltene Stundenzahl: " +
+                getTimeSum(course.getDates(requireContext())) +
+                "\nTermine: \n");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

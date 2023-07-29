@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CourseAdapter extends BaseAdapter {
 
@@ -82,9 +83,9 @@ public class CourseAdapter extends BaseAdapter {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void deleteItem(int pos, Context ctx){
+    public boolean deleteItem(int pos, Context ctx){
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
-
+        AtomicBoolean rtrn = new AtomicBoolean(false);
         Course course = courseList.get(pos);
         MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Kurs löschen?")
@@ -95,6 +96,7 @@ public class CourseAdapter extends BaseAdapter {
                     if(dataBaseHelper.deleteCourse(courseList.get(pos), true)){
                         courseList.remove(pos);
                         notifyItemRemoved(pos);
+                        rtrn.set(true);
                     }
                     dialogInterface.dismiss();
 
@@ -105,6 +107,7 @@ public class CourseAdapter extends BaseAdapter {
                 });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
+        return rtrn.get();
     }
 
     public void insertItem(Course course){

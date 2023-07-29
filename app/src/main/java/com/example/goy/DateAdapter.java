@@ -20,15 +20,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import org.w3c.dom.Text;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DateAdapter extends BaseAdapter {
     private final List<LocalDate> dateList;
+    private TextView courseTitle;
     private int highlightedPos = -1;
     private final Course course;
 
@@ -42,9 +46,11 @@ public class DateAdapter extends BaseAdapter {
         put("SUNDAY", "Sonntag");
     }};
 
-    public DateAdapter(List<LocalDate> dateList, Course course){
+    public DateAdapter(List<LocalDate> dateList, Course course, TextView courseTitle){
         this.dateList = dateList;
         this.course = course;
+        this.courseTitle = courseTitle;
+
     }
 
     public interface OnItemClickListener{
@@ -106,10 +112,15 @@ public class DateAdapter extends BaseAdapter {
     @Override
     public int getItemCount() {return dateList.size();}
 
+    private void updateTitle(String msg){
+        courseTitle.setText(msg);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void deleteItem(int pos, Context ctx){
+    public boolean deleteItem(int pos, Context ctx){
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
         LocalDate date = dateList.get(pos);
+        AtomicBoolean rtrn = new AtomicBoolean(false);
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                 .setTitle("Datum löschen?")
@@ -121,6 +132,12 @@ public class DateAdapter extends BaseAdapter {
                     }else {
                         dateList.remove(pos);
                         notifyItemRemoved(pos);
+                        String msg = "Kurs: " + course.getGroup() +
+                                "\nBisher gehaltene Stundenzahl: " +
+                                FileHandler.getCurrentDurationSum(dataBaseHelper, dateList, course) +
+                                "\nTermine: \n";
+                        updateTitle(msg);
+                        rtrn.set(true);
                     }
                     dialogInterface.dismiss();
 
@@ -132,6 +149,7 @@ public class DateAdapter extends BaseAdapter {
                 });
         AlertDialog dialog = alertBuilder.create();
         dialog.show();
+        return rtrn.get();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
