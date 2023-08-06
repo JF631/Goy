@@ -19,9 +19,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
-import org.w3c.dom.Text;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -32,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DateAdapter extends BaseAdapter {
     private final List<LocalDate> dateList;
-    private TextView courseTitle;
+    private final TextView courseTitle;
     private int highlightedPos = -1;
     private final Course course;
 
@@ -134,7 +131,7 @@ public class DateAdapter extends BaseAdapter {
                         notifyItemRemoved(pos);
                         String msg = "Kurs: " + course.getGroup() +
                                 "\nBisher gehaltene Stundenzahl: " +
-                                course.getTotalTime(ctx) +
+                                course.getTotalTime(ctx, null, null) +
                                 "\nTermine: \n";
                         updateTitle(msg);
                         rtrn.set(true);
