@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="400dp"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardPreventCornerOverlap="false"
-    app:cardUseCompatPadding="false"
-    android:padding="10dp">
+    app:cardCornerRadius="10dp">
 
     <LinearLayout
         android:layout_width="300dp"
@@ -49,16 +47,16 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:text="Speichern"
-            android:textColor="@android:color/holo_blue_dark"/>
+            android:textColor="?attr/colorPrimary"/>
 
         <Button
             android:id="@+id/create_cancel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
-            android:textColor="@android:color/holo_blue_dark"
+            android:textColor="?attr/colorPrimary"
             android:text="Abbrechen"/>
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

@@ -69,8 +69,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:layout_marginTop="90dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:layout_marginBottom="80dp"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/export_btn"
@@ -81,6 +80,7 @@
         android:layout_marginRight="10dp"
         android:transitionName="export_button"
         app:icon="@drawable/ic_pdf_export"
+        app:layout_scrollFlags="scroll|enterAlways|snap"
         android:text="Export"
         />
 
