@@ -41,6 +41,7 @@
         android:layout_alignParentEnd="true"
         android:foregroundGravity="center"
         android:src="@android:drawable/ic_menu_share"
-        android:paddingStart="8dp"/>
+        android:paddingStart="8dp"
+        android:paddingEnd="2dp"/>
 
 </RelativeLayout>
