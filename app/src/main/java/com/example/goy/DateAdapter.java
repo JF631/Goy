@@ -201,13 +201,13 @@ public class DateAdapter extends BaseAdapter {
                     public void run() {
                         if (numFlashes < NUM_FLASHES) {
                             // create ripple effect
-                            int rippleColor = ContextCompat.getColor(itemView.getContext(), R.color.ripple_color);
+                            int rippleColor = ContextCompat.getColor(itemView.getContext(), R.color.md_theme_dark_primary);
                             RippleDrawable rippleDrawable = new RippleDrawable(new ColorStateList(new int[][]{{}}, new int[]{rippleColor}), null, null);
                             itemView.setBackground(rippleDrawable);
 
                             // toggle highlight color
                             if (isHighlighted) {
-                                itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.ripple_color));
+                                itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.md_theme_dark_primary));
                             } else {
                                 itemView.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), android.R.color.transparent));
                             }

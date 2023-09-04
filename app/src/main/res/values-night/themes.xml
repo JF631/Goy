@@ -2,15 +2,13 @@
     <!-- Base application theme. -->
     <style name="Theme.Goy" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#0C6980</item>
-        <item name="colorPrimaryVariant">#BA0C6980</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondary">@color/material_dynamic_secondary40</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">#0C6980</item>
+        <item name="android:statusBarColor">@color/material_dynamic_secondary40</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>

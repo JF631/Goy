@@ -16,7 +16,7 @@
             android:id="@+id/main_toolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?attr/colorPrimary"
+            android:background="@color/material_dynamic_secondary40"
             android:elevation="6dp" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -34,7 +34,8 @@
         android:layout_gravity="bottom"
         app:menu="@menu/navigation_items"
         android:id="@+id/navigation_bar"
-        android:elevation="10dp"/>
+        android:elevation="10dp"
+        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"/>
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
