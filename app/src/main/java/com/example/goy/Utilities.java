@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 import javax.crypto.Cipher;
 
@@ -33,6 +34,17 @@ public class Utilities {
     private static final String SIGNATURE_ALGORITHM = KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
     private static final String TRANSFORMATION = "RSA/ECB/PKCS1Padding";
 
+    public static double sum(@NonNull List<Pair<Course, Double>> timeList){
+        return timeList.stream()
+                .mapToDouble(courseDoublePair -> {
+                    try{
+                        return courseDoublePair.getSecond();
+                    }catch (NumberFormatException e){
+                        return 0.0;
+                    }
+                })
+                .sum();
+    }
 
     public static LocalDate tryParseDate(@Nullable String dateString){
         final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;

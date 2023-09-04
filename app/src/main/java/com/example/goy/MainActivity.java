@@ -2,7 +2,6 @@ package com.example.goy;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -27,8 +26,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.color.DynamicColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
 import java.util.regex.Pattern;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -45,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        DynamicColors.applyToActivityIfAvailable(this);
         setContentView(R.layout.activity_main);
 
         getSharedPrefs();
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigation_bar);
         bottomNavigationView.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
+            Fragment selectedFragment;
             switch (item.getItemId()){
                 case R.id.item_dateList:
                     selectedFragment = new DepartmentFragment();
@@ -89,10 +89,12 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.item_home:
                     selectedFragment = new HomeFragment();
                     break;
-                default:
+                case R.id.item_files:
                     selectedFragment = new FilesFragment();
+                    break;
+                default:
+                    selectedFragment = new StatsFragment();
             }
-
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out);
             transaction.replace(R.id.fragment_container_view, selectedFragment).commit();
@@ -219,9 +221,7 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage("TuS Real-time Activity Check-in and Keeping System\n" +
                         "Kontakt: software_jaf@mx442.de")
                 .setCancelable(false)
-                .setNegativeButton("Abbrechen", (dialogInterface, i) -> {
-                    dialogInterface.dismiss();
-                });
+                .setNegativeButton("Abbrechen", (dialogInterface, i) -> dialogInterface.dismiss());
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
 

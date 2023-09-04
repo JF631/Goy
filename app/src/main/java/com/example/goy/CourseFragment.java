@@ -188,8 +188,8 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         return view;
     }
 
-    private double getTimeSum(List<LocalDate> dateList){
-        return course.getTotalTime(requireContext());
+    private double getTimeSum(){
+        return course.getTotalTime(requireContext(), null, null);
 
     }
 
@@ -217,7 +217,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
         setCourseDepartment(department);
         setListViewTitle("Kurs: " + course.getGroup() +
                 "\nBisher gehaltene Stundenzahl: " +
-                getTimeSum(course.getDates(requireContext())) +
+                getTimeSum() +
                 "\nTermine: \n");
     }
 

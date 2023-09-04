@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -142,19 +141,32 @@ public class Course implements Parcelable {
     public void setId(long id){this.courseId = id;}
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(Context ctx){
+    public List<LocalDate> getDates(Context ctx, @Nullable LocalDate start, @Nullable LocalDate end){
         DataBaseHelper dbHelper = new DataBaseHelper(ctx);
-        List<LocalDate> dateList = dbHelper.getDates(this, true, null, null);
+        List<LocalDate> dateList = dbHelper.getDates(this, true, start, end);
         dbHelper.close();
         return dateList;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public double getTotalTime(Context ctx){
+    public List<LocalDate> getDates(DataBaseHelper dbHelper, @Nullable LocalDate start, @Nullable LocalDate end){
+        List<LocalDate> dateList = dbHelper.getDates(this, true, start, end);
+        dbHelper.close();
+        return dateList;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public double getTotalTime(Context ctx, @Nullable LocalDate start, @Nullable LocalDate end){
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
-        List<LocalDate> dateList = getDates(ctx);
+        List<LocalDate> dateList = getDates(ctx, start, end);
         dataBaseHelper.close();
         return FileHandler.getCurrentDurationSum(dataBaseHelper, dateList, this);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public double getTotalTime(DataBaseHelper dbHelper, @Nullable LocalDate start, @Nullable LocalDate end){
+        List<LocalDate> dateList = getDates(dbHelper, start, end);
+        return FileHandler.getCurrentDurationSum(dbHelper, dateList, this);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -163,7 +175,7 @@ public class Course implements Parcelable {
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public int getNumberOfHeldTimes(Context ctx){
-        return getDates(ctx).size();
+        return getDates(ctx, null, null).size();
     }
 
 

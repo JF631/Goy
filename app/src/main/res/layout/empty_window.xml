@@ -19,7 +19,6 @@
         android:paddingTop="120dp"
         android:textStyle="bold"
         android:textSize="15sp"
-        android:textColor="@color/textColor"
         android:text="Hier findest du eine Übersicht der bereits exportierten Stundenzettel"
 
         />
