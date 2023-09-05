@@ -36,22 +36,26 @@ public class Course implements Parcelable {
     private long courseId = -1;
     private List<Triple<String, LocalTime, LocalTime>> courseTimes;
     private Set<String> locations;
-    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, Set<String> locations){
+    public Course(String department, String group, List<Triple<String,
+            LocalTime, LocalTime>> courseTimes, Set<String> locations)
+    {
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
         this.locations = locations;
     }
-
-    public Course(String department, String group, List<Triple<String, LocalTime, LocalTime>> courseTimes, int id, Set<String> locations){
+    public Course(String department, String group,
+                  List<Triple<String, LocalTime, LocalTime>> courseTimes,
+                  int id, Set<String> locations)
+    {
         this.department = department;
         this.group = group;
         this.courseTimes = courseTimes;
         this.courseId = id;
         this.locations = locations;
     }
-
-    public Course(String department, String group, int id){
+    public Course(String department, String group, int id)
+    {
         this.department = department;
         this.group = group;
         this.courseId = id;
@@ -59,21 +63,25 @@ public class Course implements Parcelable {
 
     public String getDepartment(){return department;}
     public String getGroup(){return group;}
-    public List<Triple<String, LocalTime, LocalTime>> getCourseTimes(){
+    public List<Triple<String, LocalTime, LocalTime>> getCourseTimes()
+    {
         if(courseTimes == null) return null;
         return courseTimes;
     }
 
-    public static String getDepartment(@Nullable Course course){
+    public static String getDepartment(@Nullable Course course)
+    {
         return course != null ? course.getDepartment() : null;
     }
 
-    public static String getGroup(@Nullable Course course){
+    public static String getGroup(@Nullable Course course)
+    {
         return course != null ? course.getGroup() : null;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap(){
+    public HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap()
+    {
         if(courseTimes == null) return null;
         return courseTimes.stream()
                 .sorted(Comparator.comparing(Triple::getFirst, Comparator.reverseOrder()))
@@ -85,11 +93,14 @@ public class Course implements Parcelable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public static HashMap<String, Pair<LocalTime, LocalTime>> getCourseTimesMap(Course course){
+    public static HashMap<String, Pair<LocalTime, LocalTime>>
+    getCourseTimesMap(Course course)
+    {
         return course != null ? course.getCourseTimesMap() : null;
     }
 
-    public String getDaysFlattened(){
+    public String getDaysFlattened()
+    {
         List<String> days = new ArrayList<>();
         for(Triple<String, LocalTime, LocalTime> courseTime : courseTimes){
             days.add(MY_MAP.get(courseTime.getFirst()));
@@ -101,11 +112,13 @@ public class Course implements Parcelable {
         return locations != null ? locations : null;
     }
 
-    public static Set<String> getLocations(@Nullable Course course){
+    public static Set<String> getLocations(@Nullable Course course)
+    {
         return course != null ? course.getLocations() : new HashSet<>();
     }
 
-    public String getLocationsFlattened(){
+    public String getLocationsFlattened()
+    {
         if(locations == null) return null;
         Log.d("COURSE: ", locations.toString());
         return String.join(",", locations);
@@ -116,13 +129,17 @@ public class Course implements Parcelable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void setCourseTimes(HashMap<String, Pair<LocalTime, LocalTime>> times){
+    public void setCourseTimes(HashMap<String,
+            Pair<LocalTime, LocalTime>> times)
+    {
         courseTimes = times.entrySet()
                 .stream()
                 .map(entry -> new Triple<>(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond()))
                 .collect(Collectors.toList());
     }
-    public void setCourseTimes(List<Triple<String, LocalTime, LocalTime>> times){
+    public void setCourseTimes(
+            List<Triple<String, LocalTime, LocalTime>> times)
+    {
         courseTimes = times;
     }
 
@@ -141,7 +158,10 @@ public class Course implements Parcelable {
     public void setId(long id){this.courseId = id;}
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(Context ctx, @Nullable LocalDate start, @Nullable LocalDate end){
+    public List<LocalDate> getDates(Context ctx,
+                                    @Nullable LocalDate start,
+                                    @Nullable LocalDate end)
+    {
         DataBaseHelper dbHelper = new DataBaseHelper(ctx);
         List<LocalDate> dateList = dbHelper.getDates(this, true, start, end);
         dbHelper.close();
@@ -149,14 +169,20 @@ public class Course implements Parcelable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(DataBaseHelper dbHelper, @Nullable LocalDate start, @Nullable LocalDate end){
+    public List<LocalDate> getDates(DataBaseHelper dbHelper,
+                                    @Nullable LocalDate start,
+                                    @Nullable LocalDate end)
+    {
         List<LocalDate> dateList = dbHelper.getDates(this, true, start, end);
         dbHelper.close();
         return dateList;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public double getTotalTime(Context ctx, @Nullable LocalDate start, @Nullable LocalDate end){
+    public double getTotalTime(Context ctx,
+                               @Nullable LocalDate start,
+                               @Nullable LocalDate end)
+    {
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         List<LocalDate> dateList = getDates(ctx, start, end);
         dataBaseHelper.close();
@@ -164,13 +190,17 @@ public class Course implements Parcelable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public double getTotalTime(DataBaseHelper dbHelper, @Nullable LocalDate start, @Nullable LocalDate end){
+    public double getTotalTime(DataBaseHelper dbHelper,
+                               @Nullable LocalDate start,
+                               @Nullable LocalDate end)
+    {
         List<LocalDate> dateList = getDates(dbHelper, start, end);
         return FileHandler.getCurrentDurationSum(dbHelper, dateList, this);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public String getStringNumberOfHeldTimes(Context ctx){
+    public String getStringNumberOfHeldTimes(Context ctx)
+    {
         return String.valueOf(getNumberOfHeldTimes(ctx));
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -180,7 +210,8 @@ public class Course implements Parcelable {
 
 
     @NonNull
-    public String toString(){
+    public String toString()
+    {
         return "(Abteilung: " + department + ", Gruppe: " + group + ", id: " + courseId + ")";
     }
 
@@ -190,7 +221,8 @@ public class Course implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(@NonNull Parcel parcel, int i) {
+    public void writeToParcel(@NonNull Parcel parcel, int i)
+    {
         List<String> days = new ArrayList<>(), start = new ArrayList<>(), end = new ArrayList<>();
         for(Triple<String, LocalTime, LocalTime> courseTime : courseTimes){
             days.add(courseTime.getFirst());
@@ -207,7 +239,8 @@ public class Course implements Parcelable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    protected Course(Parcel in) {
+    protected Course(Parcel in)
+    {
         List<String> days, start, end;
         List<Triple<String, LocalTime, LocalTime>> times = new ArrayList<>();
         department = in.readString();
@@ -223,7 +256,8 @@ public class Course implements Parcelable {
         courseTimes = times;
     }
 
-    public static final Creator<Course> CREATOR = new Creator<>() {
+    public static final Creator<Course> CREATOR = new Creator<>()
+    {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public Course createFromParcel(Parcel in) {

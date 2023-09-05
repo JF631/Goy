@@ -285,7 +285,10 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public List<LocalDate> getDates(Course course, boolean desc, @Nullable LocalDate start, @Nullable LocalDate end){
+    public List<LocalDate> getDates(Course course, boolean desc,
+                                    @Nullable LocalDate start,
+                                    @Nullable LocalDate end)
+    {
         SQLiteDatabase db = this.getReadableDatabase();
         List<LocalDate> rtrn = new ArrayList<>();
         String[] projection = {"date"};
@@ -347,7 +350,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
     }
 
 
-    private List<Course> getCourses(String department){
+    public List<Course> getCourses(String department){
         SQLiteDatabase db = this.getReadableDatabase();
         List<Course> courses = new ArrayList<>();
         String[] projection = {"id", "group_name"};

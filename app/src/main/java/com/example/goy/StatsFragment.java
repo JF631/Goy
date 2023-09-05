@@ -9,16 +9,16 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.cardview.widget.CardView;
-import androidx.compose.material3.ColorScheme;
-import androidx.compose.material3.MaterialTheme;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.color.MaterialColors;
@@ -31,7 +31,11 @@ import org.eazegraph.lib.models.PieModel;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 public class StatsFragment extends Fragment {
 
@@ -39,67 +43,121 @@ public class StatsFragment extends Fragment {
     private PieChart pieChart;
     private BarChart barChart;
     private Button btn_total, btn_week, btn_month, btn_year;
+    private Spinner department_spinner, year_spinner;
+
     public StatsFragment(){}
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState){
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState)
+    {
         View view = inflater.inflate(R.layout.stats_window, container, false);
+        String[] departments = new String[]{"Kurse", "Abteilungen"};
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, departments);
+        department_spinner = view.findViewById(R.id.stats_spinner_group);
+        year_spinner = view.findViewById(R.id.stats_spinner_year);
         pieChart = view.findViewById(R.id.piechart);
         barChart = view.findViewById(R.id.barchart);
         btn_total = view.findViewById(R.id.stats_total_btn);
         btn_week = view.findViewById(R.id.stats_week_btn);
         btn_month = view.findViewById(R.id.stats_month_btn);
         btn_year = view.findViewById(R.id.stats_year_btn);
-        CardView cardView = view.findViewById(R.id.stats_card_pie);
-
+        department_spinner.setAdapter(spinnerAdapter);
         dataBaseHelper = new DataBaseHelper(requireContext());
-        setUpPieChart(view, null, null);
+        AtomicReference<LocalDate> start = new AtomicReference<>(),
+                end = new AtomicReference<>();
+        updatePieChart(null, null, view);
         setBtnHighlight(Period.OVERALL);
-        setUpBarChart(view);
-
+        Pair<LocalDate, LocalDate> minMax = dataBaseHelper.getMinMaxDate();
+        int min = minMax.getFirst().getYear();
+        int max = minMax.getSecond().getYear();
+        int[] interpolated_years = IntStream.rangeClosed(min, max).toArray();
+        Integer[] yearsArray = Arrays.stream(interpolated_years)
+                .boxed()
+                .toArray(Integer[]::new);
+        ArrayAdapter<Integer> yearsAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, yearsArray);
+        year_spinner.setAdapter(yearsAdapter);
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int currentYearIndex = Arrays.binarySearch(yearsArray, currentYear);
+        year_spinner.setSelection(currentYearIndex);
+        setUpBarChart(view, (int)year_spinner.getSelectedItem());
         btn_total.setOnClickListener(view1 -> {
             setBtnHighlight(Period.OVERALL);
-            setUpPieChart(view, null, null);
+            start.set(null);
+            end.set(null);
+            updatePieChart(start.get(), end.get(), view);
         });
         btn_week.setOnClickListener(view1 -> {
             setBtnHighlight(Period.WEEK);
-            LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minus(1, ChronoUnit.WEEKS);
-            setUpPieChart(view, startDate, endDate);
+            end.set(LocalDate.now());
+            start.set(end.get().minus(1, ChronoUnit.WEEKS));
+            updatePieChart(start.get(), end.get(), view);
         });
         btn_month.setOnClickListener(view1 -> {
             setBtnHighlight(Period.MONTH);
             btn_month.setBackgroundResource(R.drawable.btn_highlight_oval);
-            LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minus(1, ChronoUnit.MONTHS);
-            setUpPieChart(view, startDate, endDate);
+            end.set(LocalDate.now());
+            start.set(end.get().minus(1, ChronoUnit.MONTHS));
+            updatePieChart(start.get(), end.get(), view);
         });
         btn_year.setOnClickListener(view1 -> {
             setBtnHighlight(Period.YEAR);
-            LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minus(1, ChronoUnit.YEARS);
-            setUpPieChart(view, startDate, endDate);
+            end.set(LocalDate.now());
+            start.set(end.get().minus(1, ChronoUnit.YEARS));
+            updatePieChart(start.get(), end.get(), view);
+        });
+
+        department_spinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view2,
+                                       int i, long l) {
+                updatePieChart(start.get(), end.get(), view);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        year_spinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view2,
+                                       int i, long l) {
+                int year  = (int) adapterView.getItemAtPosition(i);
+                setUpBarChart(view, year);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
         });
 
         return  view;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void setUpPieChart(View view, @Nullable LocalDate startDate, @Nullable LocalDate endDate){
+    private void setUpPieChart(View view, List<Pair<String, Double>> times)
+    {
         pieChart.clearChart();
-        List<Pair<Course, Double>> courseTimes = getCourseTimes(startDate, endDate);
-        double totalTime = Utilities.sum(courseTimes);
+        double totalTime = Utilities.sum(times);
         LinearLayout legendLayout = view.findViewById(R.id.legendLayout_pie);
         legendLayout.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        for(Pair<Course, Double> courseTime : courseTimes){
+        for(Pair<String, Double> courseTime : times){
             double totalHours = courseTime.getSecond();
             if(totalHours == 0.f)
                 continue;
             int dotColor = generateRandomColor();
             float coursePercentage = (float) (totalHours / totalTime * 100);
             pieChart.addPieSlice(new PieModel(
-                    courseTime.getFirst().getGroup(),
+                    courseTime.getFirst(),
                     coursePercentage,
                     dotColor
             ));
@@ -112,7 +170,7 @@ public class StatsFragment extends Fragment {
             Drawable coloredDot = generateColoredDot(dotColor);
             legendLabel.setCompoundDrawablesRelativeWithIntrinsicBounds(coloredDot, null, null, null);
             legendLabel.setText(String.format("%s, %.2fh (%.2f%%)",
-                    courseTime.getFirst().getGroup(), totalHours ,
+                    courseTime.getFirst(), totalHours ,
                     coursePercentage));
             legendLayout.addView(legendItemView);
         }
@@ -124,14 +182,31 @@ public class StatsFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void setUpBarChart(View view){
+    private void updatePieChart(@Nullable LocalDate start,
+                                @Nullable LocalDate end, View view)
+    {
+        String selection = department_spinner.getSelectedItem().toString();
+        List<Pair<String, Double>> times;
+        if(selection.equals("Kurse"))
+            times = getCourseTimes(start, end, false);
+        else
+            times = getCourseTimes(start, end, true);
+        setUpPieChart(view, times);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void setUpBarChart(View view, int year)
+    {
         barChart.clearChart();
-        int currentYear = LocalDate.now().getYear();
-        int color = MaterialColors.getColor(view, com.google.android.material.R.attr.colorPrimary);
+        int currentYear = year;
+        int color = MaterialColors.getColor(view,
+                com.google.android.material.R.attr.colorPrimary);
         for(int i = 1; i<=12; ++i) {
             LocalDate startDate = LocalDate.of(currentYear, i, 1);
-            LocalDate endDate = LocalDate.of(currentYear, i, startDate.lengthOfMonth());
-            List<Pair<Course, Double>> monthTimes = getCourseTimes(startDate, endDate);
+            LocalDate endDate = LocalDate.of(currentYear, i,
+                    startDate.lengthOfMonth());
+            List<Pair<String, Double>> monthTimes = getCourseTimes(startDate,
+                    endDate, false);
             double monthTime = Utilities.sum(monthTimes);
             barChart.addBar(new BarModel(
                     String.valueOf(endDate.getMonthValue()),
@@ -142,7 +217,8 @@ public class StatsFragment extends Fragment {
         barChart.startAnimation();
     }
 
-    private void setBtnHighlight(Period period){
+    private void setBtnHighlight(Period period)
+    {
         btn_total.setBackground(null);
         btn_year.setBackground(null);
         btn_month.setBackground(null);
@@ -164,7 +240,8 @@ public class StatsFragment extends Fragment {
         }
     }
 
-    private Drawable generateColoredDot(int color) {
+    private Drawable generateColoredDot(int color)
+    {
         ShapeDrawable shapeDrawable = new ShapeDrawable(new OvalShape());
         shapeDrawable.setIntrinsicWidth(20); // Adjust the width as needed
         shapeDrawable.setIntrinsicHeight(20); // Adjust the height as needed
@@ -173,7 +250,8 @@ public class StatsFragment extends Fragment {
     }
 
 
-    private int generateRandomColor() {
+    private int generateRandomColor()
+    {
         // Generate random values for red, green, and blue (RGB) channels
         int red = (int) (Math.random() * 256);
         int green = (int) (Math.random() * 256);
@@ -182,11 +260,29 @@ public class StatsFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private List<Pair<Course, Double>> getCourseTimes(@Nullable LocalDate start, @Nullable LocalDate end){
+    private List<Pair<String, Double>> getCourseTimes(
+            @Nullable LocalDate start, @Nullable LocalDate end,
+            boolean departments)
+    {
+        List<Pair<String, Double>> rtrn = new ArrayList<>();
+        if(departments) {
+            double tmpSum = .0;
+            String[] allDepartments = getResources().getStringArray(R.array.departments);
+            for (String department : allDepartments) {
+                List<Course> courses = dataBaseHelper.getCourses(department);
+                for(Course course : courses){
+                    tmpSum += course.getTotalTime(dataBaseHelper, start, end);
+                }
+                rtrn.add(new Pair<>(department, tmpSum));
+                tmpSum = .0;
+            }
+            return rtrn;
+        }
+
         List<Course> courseList = dataBaseHelper.getCourses();
-        List<Pair<Course, Double>> rtrn = new ArrayList<>();
         for(Course course : courseList){
-            rtrn.add(new Pair<>(course, course.getTotalTime(dataBaseHelper, start, end)));
+            rtrn.add(new Pair<>(course.getGroup(),
+                    course.getTotalTime(dataBaseHelper, start, end)));
         }
         return rtrn;
     }

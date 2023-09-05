@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -64,7 +65,6 @@ public class DepartmentFragment extends Fragment{
     private boolean copyFile = false;
     private Comparator<Pair<Course, LocalDate>> byDate, byCourse, byDuration;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String[] departments = {"Leichtathletik", "Turnen", "Fitness", "Alle"};
 
     public DepartmentFragment(){}
 
@@ -73,6 +73,7 @@ public class DepartmentFragment extends Fragment{
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.department_date_view, container, false);
+        String[] departments = getResources().getStringArray(R.array.departments);
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, departments);
         RecyclerView dateView = view.findViewById(R.id.department_dates_view);
         Spinner dpSpinner = view.findViewById(R.id.department_spinner);

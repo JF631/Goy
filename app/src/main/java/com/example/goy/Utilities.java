@@ -34,7 +34,7 @@ public class Utilities {
     private static final String SIGNATURE_ALGORITHM = KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
     private static final String TRANSFORMATION = "RSA/ECB/PKCS1Padding";
 
-    public static double sum(@NonNull List<Pair<Course, Double>> timeList){
+    public static <T> double sum(@NonNull List<Pair<T, Double>> timeList){
         return timeList.stream()
                 .mapToDouble(courseDoublePair -> {
                     try{

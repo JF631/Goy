@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">TRACKS</string>
+    <string name="location_notification_channel_id">loc_channel</string>
+    <string name="location_notification_channel_name">location channel</string>
+
+
     <string-array name="weekday_array">
         <item>Sunday</item>
         <item>Monday</item>
@@ -9,12 +13,11 @@
         <item>Friday</item>
         <item>Saturday</item>
     </string-array>
-
-    <string name="location_notification_channel_id">loc_channel</string>
-    <string name="location_notification_channel_name">location channel</string>
-
     <string-array name="departments">
-        <item>Turnen</item>
         <item>Leichtathletik</item>
+        <item>Turnen</item>
+        <item>Fitness</item>
+        <item>Alle</item>
     </string-array>
+
 </resources>
