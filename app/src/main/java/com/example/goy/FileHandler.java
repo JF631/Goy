@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FileHandler {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static void export(Uri uri, List<Pair<Course, LocalDate>> courseDateList,
+    public static void export(Uri uri, List<Pair<LocalDate, Double>> courseDateList,
                               Context ctx, String department){
         DataBaseHelper dataBaseHelper = new DataBaseHelper(ctx);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyMMdd");
@@ -48,6 +48,9 @@ public class FileHandler {
         String surname = decryptString(sharedPreferences.getString("surname", ""));
         String docName = surname + "_" + name + "_" + LocalDate.now().format(dateTimeFormatter) + "_" + department;
         int size = courseDateList.size();
+        for(Pair<LocalDate, Double> date : courseDateList){
+            Log.d("TEST", date.getFirst().toString() + " AND " + date.getSecond().toString());
+        }
         int maxSize = 43;
         int requiredFiles = (int) Math.ceil((float)size / maxSize);
         if (size > requiredFiles * maxSize) {
@@ -64,14 +67,14 @@ public class FileHandler {
             docName += ".pdf";
             fileList.add(i, new File(downloadDir, docName));
         }
-        List<Pair<Course, LocalDate>> currentList;
+        List<Pair<LocalDate, Double>> currentList;
         int offset = 0;
         for(File currentFile : fileList){
             int length = Math.min(size - offset, maxSize);
             currentList = courseDateList.subList(offset, offset + length);
-            double finalSumDuration = FileHandler.getCurrentDurationSum(dataBaseHelper, currentList);
+            double finalSumDuration = FileHandler.getDurationSum(dataBaseHelper, currentList);
             if(currentFile.exists()){
-                List<Pair<Course, LocalDate>> finalCurrentList = currentList;
+                List<Pair<LocalDate, Double>> finalCurrentList = currentList;
                 MaterialAlertDialogBuilder alertBuilder = new MaterialAlertDialogBuilder(ctx)
                         .setTitle("Datei existiert bereits")
                         .setMessage("Möchtest du die Datei " + currentFile.getName() + " überschreiben?")
@@ -79,8 +82,8 @@ public class FileHandler {
                         .setPositiveButton("überschreiben", (dialogInterface, index) -> {
                             dialogInterface.dismiss();
                             try {
-                                writeToPdf(currentFile, uri, finalCurrentList, finalSumDuration, finalCurrentList.size(),
-                                        ctx, department);
+                                writeToPdf(currentFile, uri, finalCurrentList, finalSumDuration,
+                                        finalCurrentList.size(), ctx, department);
                             } catch (IOException e) {
                                 Toast.makeText(ctx, "Es ist ein Fehler beim exportieren aufgetreten", Toast.LENGTH_LONG).show();
                                 Log.e("Export error: ", e.toString());
@@ -117,11 +120,26 @@ public class FileHandler {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static double getCurrentDurationSum(DataBaseHelper dataBaseHelper, List<Pair<Course, LocalDate>> courseDateList) {
+    public static double getCurrentDurationSum(DataBaseHelper dataBaseHelper,
+                                               List<Pair<Course, LocalDate>> courseDateList) {
         return courseDateList.stream()
                 .mapToDouble(pair -> {
                     try {
                         return Double.parseDouble(dataBaseHelper.getDuration(pair.getFirst(), pair.getSecond().getDayOfWeek()));
+                    } catch (NumberFormatException e) {
+                        return 0.0;
+                    }
+                })
+                .sum();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static double getDurationSum(DataBaseHelper dataBaseHelper,
+                                               List<Pair<LocalDate, Double>> courseDateList) {
+        return courseDateList.stream()
+                .mapToDouble(pair -> {
+                    try {
+                        return pair.getSecond();
                     } catch (NumberFormatException e) {
                         return 0.0;
                     }
@@ -147,7 +165,7 @@ public class FileHandler {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private static void writeToPdf(File pdfFile, Uri uri,
-                                   List<Pair<Course, LocalDate>> courseLocalDateList,
+                                   List<Pair<LocalDate, Double>> courseLocalDateList,
                                    double sumDuration, int size,
                                    Context ctx, String department) throws IOException {
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
@@ -201,8 +219,8 @@ public class FileHandler {
             durationKey = "du1." + (i % 22) + "." + d;
             if (fields.containsKey(dateKey) && fields.containsKey(durationKey)) {
                 Log.d("TEST", "save");
-                LocalDate localDate = courseLocalDateList.get(i).getSecond();
-                String duration = dataBaseHelper.getDuration(courseLocalDateList.get(i).getFirst(), localDate.getDayOfWeek());
+                LocalDate localDate = courseLocalDateList.get(i).getFirst();
+                String duration = courseLocalDateList.get(i).getSecond().toString();
                 Objects.requireNonNull(fields.get(dateKey)).setValue(localDate.format(dateTimeFormatter));
                 Objects.requireNonNull(fields.get(durationKey)).setValue(duration);
             }

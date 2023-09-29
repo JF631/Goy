@@ -171,7 +171,7 @@ public class CourseFragment extends Fragment implements CreateFragment.OnCreateC
                         Log.d("FILE", file.getAbsolutePath());
                         if(file.exists()) {
                             Uri uri = Uri.fromFile(file);
-                            List<Pair<Course, LocalDate>> courseDateList = dataBaseHelper.getDates(course, Utilities.tryParseDate(exportStart.getText().toString()),
+                            List<Pair<LocalDate, Double>> courseDateList = dataBaseHelper.getDurationSum(course, Utilities.tryParseDate(exportStart.getText().toString()),
                                     Utilities.tryParseDate(exportEnd.getText().toString()));
                             FileHandler.export(uri, courseDateList, requireContext(), course.getGroup());
                         }else {

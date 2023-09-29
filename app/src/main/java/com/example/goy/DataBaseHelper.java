@@ -20,10 +20,12 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class DataBaseHelper extends SQLiteOpenHelper {
@@ -399,6 +401,40 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         return rtrn;
     }
 
+    /*
+    * TODO: add "Alle export option"
+    */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<LocalDate, Double>> getDurationSum(@NonNull Course course, @Nullable LocalDate start, @Nullable LocalDate end){
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Pair<LocalDate, Double>> rtrn = new ArrayList<>();
+        String[] projection = {"date"};
+        String selection = "courseId = ?";
+        List<String> args = new ArrayList<>();
+        if(start != null){
+            selection += " AND date >= ?";
+            args.add(start.format(formatter));
+        }
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+            Log.d("args: ", args.toString());
+        }
+        args.add(0, course.getStringId());
+        Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
+        while (cursor.moveToNext()){
+            String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+            LocalDate cDate = LocalDate.parse(courseDate, formatter);
+            Pair<LocalDate, Double> courseDatePair = new Pair<>(cDate,
+                    Double.parseDouble(getDuration(course, cDate.getDayOfWeek())));
+            rtrn.add(courseDatePair);
+        }
+        cursor.close();
+        args.remove(0);
+        db.close();
+        return rtrn;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     public List<Pair<Course, LocalDate>> getDates(@Nullable LocalDate start, @Nullable LocalDate end){
         List<Pair<Course, LocalDate>> rtrn = new ArrayList<>();
@@ -450,6 +486,44 @@ public class DataBaseHelper extends SQLiteOpenHelper {
         }
         db.close();
         return rtrn;
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public List<Pair<LocalDate, Double>> getDurationDates(@NonNull String department, @Nullable LocalDate start, @Nullable LocalDate end){
+        SQLiteDatabase db = this.getReadableDatabase();
+        HashMap<LocalDate, Double> rtrn = new HashMap<>();
+        List<Course> courses = getCourses(department);
+        Log.e("start courses: ", courses.toString());
+        String[] projection = {"date"};
+        String selection = "courseId = ?";
+        List<String> args = new ArrayList<>();
+        if(start != null){
+            selection += " AND date >= ?";
+            args.add(start.format(formatter));
+        }
+        if (end != null){
+            selection += " AND date <= ?";
+            args.add(end.format(formatter));
+            Log.d("args: ", args.toString());
+        }
+        for(Course course : courses){
+            args.add(0, course.getStringId());
+            Log.d("args: ", args.toString());
+            Cursor cursor = db.query("course_date", projection, selection, args.toArray(new String[0]), null, null, null);
+            while (cursor.moveToNext()){
+                String courseDate = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                LocalDate cDate = LocalDate.parse(courseDate, formatter);
+                rtrn.put(cDate, rtrn.getOrDefault(cDate, 0.0) +
+                        Double.parseDouble(getDuration(course, cDate.getDayOfWeek())));
+            }
+            cursor.close();
+            args.remove(0);
+        }
+        db.close();
+        return rtrn.entrySet().stream().map(entry ->
+                new Pair<>(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

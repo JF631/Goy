@@ -51,6 +51,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -201,7 +202,9 @@ public class DepartmentFragment extends Fragment{
                         Toast.makeText(requireContext(), "Kopieren fehlgeschlagen", Toast.LENGTH_LONG).show();
                     }
                 }
-                FileHandler.export(uri, courseDateList, requireContext(), department);
+                List<Pair<LocalDate, Double>> list = dataBaseHelper.getDurationDates(department,
+                        Utilities.tryParseDate(start.get()), Utilities.tryParseDate(end.get()));
+                FileHandler.export(uri, list, requireContext(), department);
             }
         });
 
@@ -261,12 +264,15 @@ public class DepartmentFragment extends Fragment{
                         if(file.exists()) {
                             Uri uri = Uri.fromFile(file);
                             List<Pair<Course, LocalDate>> dateList;
+                            List<Pair<LocalDate, Double>> dates;
                             String tmpDepartment = department;
                             if(exportAll.isChecked())
                                 tmpDepartment = "Alle";
                             dateList = dataBaseHelper.getDates(tmpDepartment, Utilities.tryParseDate(exportStart.getText().toString()),
                                         Utilities.tryParseDate(exportEnd.getText().toString()));
-                            FileHandler.export(uri, dateList, requireContext(), tmpDepartment);
+                            dates = dataBaseHelper.getDurationDates(tmpDepartment, Utilities.tryParseDate(exportStart.getText().toString()),
+                                    Utilities.tryParseDate(exportEnd.getText().toString()));
+                            FileHandler.export(uri, dates, requireContext(), tmpDepartment);
                         }else{
                             selectDocument();
                         }
